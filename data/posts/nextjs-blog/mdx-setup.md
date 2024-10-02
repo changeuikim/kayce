@@ -1,0 +1,273 @@
+---
+title: 'MDX 파싱을 위한 Next.js 설정하기'
+date: '2024-10-02 22:00'
+author: 'kayce'
+tags: ['setup', 'mdx', 'prettier', 'husky']
+---
+
+## 왜 MDX를 사용하는가?
+
+[MDX](https://mdxjs.com/docs/what-is-mdx/)는 마크다운 문서와 JSX를 혼합하여 사용할 수 있는 문서 포맷입니다. JSX 뿐만 아니라 JavaScript 표현식을 사용한 IIFE(Immediately Invoked Function Expression)도 지원하며, import와 export 구문을 사용한 ESM(ES Modules)을 지원합니다. Pages Router 시절부터 [Next.js의 공식문서](https://nextjs.org/docs/pages/building-your-application/configuring/mdx)에서 소개되고 있기 때문에 Next와의 호환성도 나쁘지 않습니다. 블로그를 SSG로 정적 배포를 하기 위해서 이번에 MDX를 사용해보기로 했습니다.
+
+## MDX 설치하기
+
+### MDX 관련 라이브러리 설치
+
+```bash
+yarn add @mdx-js/react @types/mdx @mdx-js/loader @next/mdx next-mdx-remote gray-matter
+```
+
+- @mdx-js/react: MDX 파일 내에서 JSX를 사용할 수 있게 해주며, MDX 컨텐츠를 React 애플리케이션에 통합하는 데 필요한 컴포넌트와 유틸리티를 제공합니다.
+- @types/mdx: TypeScript 프로젝트에서 MDX 파일을 사용할 때 필요한 타입 정의를 제공합니다.
+- @mdx-js/loader: Webpack용 로더로, MDX 파일을 JavaScript 모듈로 변환합니다.
+- @next/mdx: Next.js의 페이지 시스템에 MDX 파일을 직접 통합할 수 있게 해줍니다.
+- next-mdx-remote: MDX 컨텐츠를 문자열로 받아 런타임에 렌더링할 수 있게 해주는 라이브러리입니다. 주로 동적으로 로드되는 MDX 컨텐츠를 처리할 때 사용합니다.
+- gray-matter: MDX 파일의 front matter를 파싱하는 라이브러리입니다. front matter는 파일 상단에 위치한 메타데이터 섹션으로, YAML 형식으로 작성할 수 있습니다.
+
+![dependencies](../../../public/static/images/nextjs-blog/mdx-setup/dependencies.png)
+
+- yarn add 명령어로 MDX 관련 라이브러리를 설치합니다.
+  - @mdx-js/loader@3.0.1
+  - @mdx-js/react@3.0.1
+  - @next/mdx@14.2.14
+  - gray-matter@4.0.3
+  - next-mdx-remote@5.0.0
+- 중간에 @mdx-js/loader@3.0.1이 "webpack@>=5"의 peer dependency를 충족하지 못한다고 warning이 발생합니다. 하지만 [Next.js는 Webpack 5를 사용](https://nextjs.org/docs/messages/webpack5)하고 있으므로 무시해도 됩니다.
+
+### next.config.mjs 설정
+
+next.config.mjs는 Next 프레임워크의 설정 파일으로, 프로젝트의 기본 환경 설정을 정의합니다. `.md` 또는 `.mdx` 확장자를 가진 파일이 페이지, 라우트 등으로 사용될 수 있도록 여기에 설정을 추가해야 합니다.
+
+```jsx
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
+
+export default nextConfig;
+```
+
+- 초기 상태의 next.config.mjs 파일입니다.
+
+```jsx
+import createMDX from '@next/mdx';
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Configure `pageExtensions` to include markdown and MDX files
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+
+  // Optionally, add any other Next.js config below
+};
+
+const withMDX = createMDX({
+  // Add markdown plugins here, as desired
+});
+
+// Merge MDX config with Next.js config
+export default withMDX(nextConfig);
+```
+
+- pageExtensions: Next.js에서 페이지로 사용할 수 있는 파일 확장자를 지정합니다. 기본값은 ['js', 'jsx', 'ts', 'tsx']입니다. 여기에 'md'와 'mdx'를 추가하여 마크다운과 MDX 파일을 페이지로 사용할 수 있도록 설정합니다.
+- withMDX: createMDX 함수를 호출하여 MDX 설정을 추가합니다. 이 함수는 MDX 파일을 JavaScript 모듈로 변환하는 Webpack 로더를 설정하고, MDX 파일을 Next.js 페이지로 사용할 수 있도록 해줍니다.
+
+## Prettier 및 Husky 설정하기
+
+mdx-components.tsx 파일을 생성하기 전에 Prettier와 Husky를 설치해서 코드 포맷팅과 커밋 전에 lint를 실행하도록 설정합니다.
+
+### 의존성 설치
+
+```bash
+yarn add -D prettier eslint-config-prettier eslint-plugin-prettier husky lint-staged
+```
+
+- prettier: 코드 포맷팅 도구입니다.
+- eslint-config-prettier: ESLint와 Prettier의 충돌을 방지합니다.
+- eslint-plugin-prettier: Prettier를 ESLint 규칙으로 실행합니다.
+- husky: 커밋 전 lint 실행 등 Git hook을 설정할 수 있게 해줍니다.
+- lint-staged: Git에 staged된 파일에 대해서만 lint를 실행할 수 있게 해줍니다.
+
+![devDependencies](../../../public/static/images/nextjs-blog/mdx-setup/devDependencies.png)
+
+- yarn add 명령어로 Prettier 및 Husky 관련 라이브러리를 설치합니다.
+  - eslint-config-prettier@9.1.0
+  - eslint-plugin-prettier@5.2.1
+  - husky@9.1.6
+  - lint-staged@15.2.10
+  - prettier@3.3.3
+
+### Prettier 설정하기
+
+> Prettier는 코드 포맷팅 도구로, 코드 스타일을 일관되게 유지하고 가독성을 높이는 데 도움을 줍니다. ESLint와의 충돌을 방지하기 위해 추가 설정이 필요합니다.
+
+```json
+{
+  "extends": ["next/core-web-vitals", "next/typescript", "prettier"],
+  "plugins": ["prettier"],
+  "rules": {
+    "prettier/prettier": "error",
+    "react/react-in-jsx-scope": "off"
+  }
+}
+```
+
+- 루트 경로의 .eslintrc.json 파일에 Prettier 설정을 추가합니다.
+  - extends: prettier와 충돌하는 ESLint 규칙을 비활성화합니다.
+  - plugins: Prettier 규칙을 ESLint에 통합합니다.
+  - rules:
+    - prettier/prettier: Prettier 규칙 위반을 error로 처리합니다.
+    - react/react-in-jsx-scope: Next.js에서 React를 import하지 않아도 사용할 수 있도록 설정합니다.
+
+````json
+{
+  "trailingComma": "es5",
+  "semi": true,
+  "tabWidth": 2,
+  "singleQuote": true,
+  "jsxSingleQuote": false,
+  "printWidth": 100
+}
+
+- 루트 경로의 .prettierrc.json 파일에 Prettier 설정을 추가합니다.
+  - trailingComma: ECMAScript 5에서 유효한 위치에 후행 쉼표를 추가합니다.
+  - semi: 문장 끝에 세미콜론을 추가합니다.
+  - tabWidth: 들여쓰기 폭을 2 스페이스로 설정합니다.
+  - singleQuote: 문자열에 작은따옴표를 사용합니다.
+  - jsxSingleQuote: JSX 속성에 큰따옴표를 사용하지 않습니다.
+  - printWidth: 한 줄의 최대 길이를 100자로 설정합니다.
+
+```json
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+````
+
+- 특별한 변경사항은 없지만 현재 시점의 tsconfig.json 파일에 대한 해석입니다.
+  - lib: DOM과 ESNext 라이브러리를 사용할 수 있도록 설정합니다.
+  - allowJs: JavaScript 파일을 컴파일할 수 있도록 설정합니다.
+  - skipLibCheck: 라이브러리 파일은 타입 체크를 건너뜁니다.
+  - strict: 엄격한 타입 검사를 활성화합니다.
+  - noEmit: 컴파일 결과를 생성하지 않습니다. Next.js가 처리합니다.
+  - esModuleInterop: CommonJS와 ESM 간의 상호 운용성을 활성화합니다.
+  - module: ESM을 사용합니다.
+  - moduleResolution: 모듈 해석 방식을 bundler로 설정합니다.
+  - resolveJsonModule: JSON 파일을 import할 수 있도록 설정합니다.
+  - isolatedModules: 모든 모듈은 독립적으로 트랜스파일링됩니다.
+  - jsx: JSX 코드 생성은 Next.js가 처리합니다.
+  - incremental: 증분 컴파일을 활성화하여 빌드 속도를 향상합니다.
+  - plugins: Next.js 플러그인을 사용합니다.
+  - paths: `./src` 디렉터리를 `@`로 별칭을 지정합니다.
+  - include: TypeScript 파일을 컴파일할 대상을 지정합니다.
+  - exclude: 컴파일 대상에서 제외할 파일을 지정합니다.
+
+### Husky 설정하기
+
+> Husky는 Git hook을 설정할 수 있게 해주는 도구로, 커밋 전에 lint를 실행하거나 푸시 전에 테스트를 실행하는 등의 작업을 설정할 수 있습니다.
+
+```json
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+```
+
+- devDependencies 아래에 lint-staged 설정을 추가합니다.
+  - `\*.{js,jsx,ts,tsx}`: JS/TS 파일에 대해서만 lint-staged를 실행합니다.
+  - eslint --fix: ESLint로 문제를 자동으로 수정합니다.
+  - prettier --write: Prettier로 코드를 포맷팅합니다.
+
+```bash
+yarn husky init
+```
+
+![husky-init](../../../public/static/images/nextjs-blog/mdx-setup/husky-init.png)
+
+- .husky 디렉토리를 생성하고 Git hook을 설정합니다.
+
+```bash
+echo "yarn lint-staged" > .husky/pre-commit
+chmod +x .husky/pre-commit
+```
+
+- pre-commit 파일을 생성하고 실행 권한을 부여합니다.
+  - yarn lint-staged: lint-staged를 실행합니다.
+
+## MDX -> JSX 변환함수 정의하기
+
+> `mdx/types` 라이브러리에서 제공하는 `MDXComponents` 타입을 사용해서 MDX를 JSX로 변환해서 반환하는 함수를 정의합니다.
+
+```tsx
+import React from 'react';
+import type { MDXComponents } from 'mdx/types';
+
+export function useMDXComponents(components: MDXComponents): MDXComponents {
+  return {
+    ...components,
+    h1: (props) => <h1 className="text-4xl font-black pb-4" {...props} />,
+    h2: (props) => <h2 className="text-3xl font-bold pb-4" {...props} />,
+    h3: (props) => <h3 className="text-2xl font-semibold pb-4 " {...props} />,
+    h4: (props) => <h4 className="text-xl font-medium pb-4" {...props} />,
+    h5: (props) => <h5 className="text-lg font-normal pb-4" {...props} />,
+    h6: (props) => <h6 className="text-base font-light pb-4" {...props} />,
+    p: (props) => <p className="text-lg mb-4" {...props} />,
+    li: (props) => <li className="pb-1" {...props} />,
+    ul: (props) => <ul className="list-disc pl-6 pb-4" {...props} />,
+    ol: (props) => <ol className="list-decimal pl-6 pb-4" {...props} />,
+    hr: (props) => <hr className="my-4" {...props} />,
+    blockquote: (props) => (
+      <blockquote style={{ paddingBottom: 0 }} className="border-l-4 pl-4 my-4" {...props} />
+    ),
+    a: (props) => <a className="hover:underline font-semibold" {...props} />,
+  };
+}
+```
+
+- ...components: ES6 문법의 spread 연산자를 사용하여 함수에 전달된 components의 모든 프로퍼티를 반환되는 객체에 복사합니다. 단, 명시적으로 정의된 HTML 요소는 동일한 이름의 프로퍼티를 오버라이딩 합니다. 결과적으로 MDX의 기본 동작을 해치지 않으면서 원하는 요소만 Tailwind CSS가 적용된 JSX로 교체할 수 있습니다.
+- h1 ~ h6:
+  - HTML 제목 요소입니다.
+  - text- : Tailwind CSS의 글꼴 크기를 나타내는 클래스입니다. CSS의 font-size 속성을 대체합니다.
+  - font- : Tailwind CSS의 글꼴 두께를 나타내는 클래스입니다. CSS의 font-weight 속성을 대체합니다.
+  - pb- : Tailwind CSS의 패딩을 나타내는 클래스입니다. CSS의 padding-bottom 속성을 대체합니다.
+- p:
+  - HTML 문단 요소입니다.
+  - mb- : Tailwind CSS의 마진을 나타내는 클래스입니다. CSS의 margin-bottom 속성을 대체합니다.
+- li, ul, ol:
+  - HTML 리스트 요소입니다.
+  - list- : Tailwind CSS의 목록 스타일을 나타내는 클래스입니다. CSS의 list-style-type 속성을 대체합니다.
+  - pl- : Tailwind CSS의 패딩을 나타내는 클래스입니다. CSS의 padding-left 속성을 대체합니다.
+- hr:
+  - HTML 수평선 요소입니다.
+  - my- : Tailwind CSS의 마진을 나타내는 클래스입니다. CSS의 margin-top 속성과 margin-bottom 속성을 대체합니다.
+- blockquote:
+  - HTML 인용 요소입니다.
+  - border-l- : Tailwind CSS의 왼쪽 테두리를 나타내는 클래스입니다. CSS의 border-left 속성을 대체합니다.
+- a:
+  - HTML 앵커 요소입니다.
+  - hover:underline: Tailwind CSS의 앵커에 마우스를 올렸을 때 밑줄을 표시하는 클래스입니다. CSS의 text-decoration 속성을 대체합니다.
+
+## 마치며
+
+직접 정적 블로그를 구현하기 위해서는 추가해야할 기능이 많이 있습니다. 다크모드 지원, 댓글 기능 등의 기능 구현에 앞서 MDX를 JSX로 파싱하는 로직을 구현하는 것이 먼저라고 생각했습니다. 이 과정에서 Prettier 설치가 누락되었다는 것을 알게 되었고, 하는 김에 Husky까지 설정했습니다. 다음 포스트에서는 mdx-components.tsx 파일을 사용해서 실제로 MDX를 JSX로 변환하는 로직을 구현하도록 하겠습니다.
