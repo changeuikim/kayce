@@ -1,0 +1,162 @@
+---
+title: '신규 론칭되는 서비스에 백엔드 개발자로 참여한 후기'
+date: '2024-10-02 11:05'
+author: 'kayce'
+tags: ['project', 'kickoff', 'frontend', 'backend']
+---
+
+## 프로젝트 개요
+
+### 프로젝트 목적
+
+판매 예정인 상품에 대한 정보를 제공하는 반응형 홈페이지를 개발합니다. 우선적으로 일반 회원과 관리자 회원의 관리 시스템을 구현하고, 상품 정보를 웹 매거진 형태로 보여주는 웹 서비스를 구현합니다.
+
+### 주요 기능 및 구현 방법
+
+일반 유저가 접근할 수 있는 웹 매거진 사이트, 회원 및 상품 정보 관리가 가능한 관리자 사이트, 각 사이트에 서비스 로직을 제공하는 API 서버를 개발하였습니다.
+
+- 웹 매거진 사이트는 Next.js 14를 사용해서 개발하였습니다. 검색 엔진에 노출되어야 하는 웹 매거진의 특성을 고려하면 SEO(Search Engine Optimization)에 유리한 SSR(Server-Side Rendering)이 필요하다고 판단했습니다.
+- 관리자 사이트는 CRA(Create React App)를 사용해서 개발하였습니다. 관리자 사이트는 SEO를 고려할 필요가 없으므로 경량화된 CSR(Client-Side Rendering) 으로 충분하다고 판단했습니다.
+- 프로젝트 초기 단계이기 때문에 API 서버는 유저 페이지와 관리자 페이지의 구분없이 단일 Spring Boot 서버로 API를 제공하였습니다.
+- 인프라 관리의 표준화를 위해 AWS CloudFormation을 사용하여 코드로 인프라 프로비저닝을 수행하였습니다.
+- 지속적인 구성 관리를 위해 AWS CodePipeline을 사용하여 CI/CD 파이프라인을 구축하였습니다.
+
+### 개발 기간
+
+1. 개발 인력:
+
+   - PM: 1명
+   - 기획자: 1명
+   - 디자이너: 1명
+   - 리스크 매니저: 1명
+   - 프론트엔드 개발자: 2명
+   - 백엔드 개발자: 3명
+
+2. 개발 기간: 2024년 07월 08일 ~ 2024년 09월 06일 (9주)
+
+3. 세부 일정:
+
+   - 1 ~ 3주차 : 클라이언트 요구사항 분석 및 설계
+   - 4 ~ 7주차 : FE/BE 서버 개발 및 배포된 서비스 관리
+   - 8 ~ 9주차 : QA/QC 및 런칭
+
+## Next.js FE 서버
+
+### FE 서버 설계
+
+프론트엔드 서버의 기술 스택을 선택하는 가장 중요한 기준 중의 하나는 불필요한 번들링 규모를 줄이는데 있다고 생각합니다. SEO의 중요한 지표들은 본질적으로 사용자 경험을 해치지 않는 선에서 페이지 로딩 속도를 높이는 방향으로 이루어져 있습니다. 이러한 결정에 있어서 백엔드 서버와의 연계도 필요하기 때문에 FE 서버의 기술 스택을 결정할 때 백엔드 개발자도 함께 참여하였습니다.
+
+### 개발 환경
+
+> 검색엔진 노출을 고려해 SSR을 지원하는 Next.js 14 프레임워크를 사용하였습니다.
+
+2022년에 출시된 Next.js 13 버전도 여전히 많은 개발자들에게 사용되고 있었습니다. 하지만 많은 팀원이 14 버전의 App Router와 Server Component 개념에 익숙해진 상태였기에 개발 생산성을 고려해 14 버전을 선택하였습니다.
+
+- next 14
+- react 18
+- react-dom 18
+
+> 컴포넌트 스타일링에는 Tailwind CSS와 shadcn/ui 라이브러리를 사용하였습니다.
+
+Next 14는 설치 시 기본적으로 Tailwind CSS를 지원하고 있어서 별도의 설정 없이 바로 사용할 수 있었습니다. shadcn/ui는 Tailwind CSS와 radix-ui를 기반으로 한 컴포넌트 라이브러리로, 재사용가능한 컴포넌트를 제공해 개발 생산성을 높이는 데 도움을 주었습니다.
+
+- tailwindcss
+- postcss
+- tailwind-merge
+- tailwindcss-animate
+- @radix-ui/react-select
+
+> 타입 안정성을 고려하여 TypeScript를 사용하였습니다.
+
+Swagger 문서를 이용한 자동 타입 생성기인 `swagger-typescript-api`를 사용하여 API 요청 및 응답에 대한 타입을 자동으로 생성하였습니다.
+
+- typescript
+- @types/node
+- @types/react
+- @types/react-dom
+- swagger-typescript-api
+
+> 표준화된 코드 스타일을 유지하기 위해 ESLint와 Prettier를 사용하였습니다.
+
+- eslint
+- eslint-config-next
+- prettier
+- eslint-config-prettier
+- eslint-plugin-prettier
+
+그 외 조건부 스타일링에 도움이 되는 'clsx', 캐러셀 컴포넌트 구현에 필요한 'swiper' 라이브러리 등을 사용하였습니다.
+
+## CRA FE 서버
+
+### 개발 환경
+
+> 경량화를 위해 CRA(Create React App)를 사용해 리액트 애플리케이션으로 개발하였습니다.
+
+React는 프레임워크가 아닌 라이브러리이기 때문에 완전한 웹 페이지의 구현을 위해서는 추가적인 라이브러리가 필요합니다. 페이지 전환 시에 필요한 라우팅을 위해 `react-router-dom` 라이브러리를 사용하였습니다. 또한, API 서버와의 통신을 위해 `axios` 라이브러리를 사용하였습니다.
+
+- react
+- react-dom
+- react-router-dom
+- axios
+
+> TypeScript, ESLint, Prettier를 사용하여 타입 안정성과 코드 품질을 유지하였습니다.
+
+- typescript
+- swagger-typescript-api
+- eslint
+- eslint-config-prettier
+- eslint-plugin-prettier
+- prettier
+
+## Spring Boot API 서버
+
+### BE 서버 설계
+
+FE 서버와 마찬가지로 BE 서버의 기술 스택을 결정할 때도 프론트엔드 개발자도 함께 참여하였습니다. 백엔드 서버는 라이브러리 자체를 사용자에게 전송하지 않아도 되기 때문에 의존성의 크기보다는 안전성과 성능에 중점을 두었습니다.
+
+### 개발 환경
+
+> 개발 시점에서 적어도 1년 이상 안정적으로 사용되어온 Spring Boot 3.0.6을 사용하였습니다.
+
+Spring Boot 3부터는 JDK 17 이상을 필요로 합니다. Spring Web은 Sprig MVC를 구성할 때 사용되는 라이브러리로 내장된 Tomcat 서버를 사용하여 웹 서비스를 제공합니다. Spring Boot Dev Tools는 개발 시에 자동으로 코드를 재시작해주는 라이브러리로 개발 생산성을 높이는 데 도움을 주었습니다.
+
+- Spring Boot 3.0.6
+- JDK 17
+- Spring Web
+- Spring Boot Dev Tools
+
+> 데이터베이스 연결과 트랜잭션 관리를 위해 Spring Data JPA를 사용하였습니다.
+
+기본적인 CRUD(Create, Read, Update, Delete) 기능이 필요할 때는 JpaRepository 인터페이스를 상속하여 쿼리 메서드를 사용하였습니다. 복잡한 조인 등으로 N+1 문제가 예상되는 경우에는 QueryDSL을 사용하여 쿼리를 구현하였습니다. 쓰기 작업보다는 읽기 작업이 많은 서비스의 특성을 고려하여 데이터베이스 엔진은 MySQL을 사용하였습니다.
+
+- Spring Data JPA
+- Query DSL
+- MySQL Driver
+
+> 인증과 인가의 구현에는 JWT(Json Web Token)을 사용하였습니다.
+
+회원 가입 시에 소셜 로그인을 통해 회원 정보를 받아온 다음 자체 JWT 토큰을 발급해 인증/인가를 구현하였습니다. 비밀번호 암호화 등에 Spring Security의 PasswordEncoder를 사용하였고, JWT 토큰 발급 및 검증에는 jjwt 라이브러리를 사용하였습니다.
+
+- Spring Security
+- Json Web Token
+
+> 표준화된 코드 스타일을 유지하기 위해 Lombok, Validation, Spotless를 사용하였습니다.
+
+Lombok은 getter, setter 등 반복적인 코드를 줄여주는 라이브러리로 코드의 가독성과 개발 생산성을 높이는 데 도움이 됩니다. Validation은 입력값의 유효성을 미리 검사하여 불필요한 데이터베이스 호출을 줄여줍니다. Spotless는 코드 포맷팅을 자동으로 해주는 라이브러리로 FE의 Prettier와 같은 역할을 합니다.
+
+- Lombok
+- Validation
+- Spotless
+
+> API 문서화를 위해 swagger-ui를 사용하였습니다.
+
+그 외 로깅 관리를 위한 Logback, 환경변수 파일 사용을 위한 Dotenv, S3 Presigned URL 생성을 위한 AWS SDK for Java 등을 사용하였습니다.
+
+- Swagger UI
+- Logback
+- Dotenv
+- AWS SDK for Java
+
+## 마치며
+
+실제 론칭되는 서비스였기 때문에 클라이언트의 의향을 구현하는 것이 가장 중요했습니다. 그와 동시에 9/1 론칭까지 현실적으로 개발 가능한 부분을 확정짓는 것도 중요했습니다. 초기 3주에는 변경될 가능성이 낮은 기능부터 우선적으로 개발하였습니다. 다소 넉넉하지 않은 개발 일정이었지만 슬랙과 피그마 등을 통한 지속적인 소통과 팀원 간의 팔로우 업을 통해 9/1 론칭을 성공적으로 마칠 수 있었습니다.

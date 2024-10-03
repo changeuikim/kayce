@@ -1,0 +1,187 @@
+---
+title: 'MDX 파싱 및 Tailwind CSS 스타일링 적용'
+date: '2024-10-03 23:48'
+author: 'kayce'
+tags: ['MDXComponents', 'MDXRemote', 'gray-matter', 'fs']
+---
+
+## MDXComponents 타입과 MDXRemote 라이브러리
+
+MDXComponents 타입은 문자열 키와 React 컴포넌트를 값으로 가지는 객체입니다. MDXRemote 컴포넌트는 MDX 콘텐츠를 파싱하고, 각 요소를 MDXComponents 객체에 정의된 컴포넌트로 변환합니다.
+
+```tsx
+/**
+ * MDX components may be passed as the `components`.
+ *
+ * The key is the name of the element to override. The value is the component to render instead.
+ */
+export type MDXComponents = NestedMDXComponents & {
+  [Key in StringComponent]?: Component<JSX.IntrinsicElements[Key]>;
+} & {
+  /**
+   * If a wrapper component is defined, the MDX content will be wrapped inside of it.
+   */
+  wrapper?: Component<any>;
+};
+```
+
+- 예를 들어, MDX 콘텐츠에 `# 제목문자열`이 있다면, 이는 `<h1>제목문자열</h1>`로 변환됩니다.
+
+```tsx
+import type { MDXComponents } from 'mdx/types';
+
+export const mdxComponents: MDXComponents = {
+  h1: (props) => <h1 className="text-4xl font-black pb-4" {...props} />,
+  h2: (props) => <h2 className="text-3xl font-bold pb-4" {...props} />,
+  h3: (props) => <h3 className="text-2xl font-semibold pb-4 " {...props} />,
+  h4: (props) => <h4 className="text-xl font-medium pb-4" {...props} />,
+  h5: (props) => <h5 className="text-lg font-normal pb-4" {...props} />,
+  h6: (props) => <h6 className="text-base font-light pb-4" {...props} />,
+  p: (props) => <p className="text-lg mb-4" {...props} />,
+  li: (props) => <li className="pb-1" {...props} />,
+  ul: (props) => <ul className="list-disc pl-6 pb-4" {...props} />,
+  ol: (props) => <ol className="list-decimal pl-6 pb-4" {...props} />,
+  hr: (props) => <hr className="my-4" {...props} />,
+  blockquote: (props) => (
+    <blockquote
+      className="border-l-4 border-rose-700 bg-rose-100 p-4 my-4 rounded-r flex items-center"
+      {...props}
+    >
+      <p className="m-0">{props.children}</p>
+    </blockquote>
+  ),
+  pre: (props) => <pre className="bg-amber-50 rounded-md p-4 overflow-x-auto my-4" {...props} />,
+  code: ({ className, ...props }) => {
+    const match = /language-(\w+)/.exec(className || '');
+    return (
+      <code className={`${match ? `language-${match[1]}` : ''} text-sm font-mono`} {...props} />
+    );
+  },
+  a: (props) => <a className="hover:underline font-semibold" {...props} />,
+};
+```
+
+- 앞서 정의한 mdx-components.tsx 파일에 정의된 useComponents 함수를 mdxComponents 객체로 변경했습니다. useComponents라는 이름은 리액트 훅으로 혼동될 여지가 있다고 생각했습니다.
+- 이 객체는 각 문자열 키에 해당하는 컴포넌트를 Tailwind CSS가 적용된 커스텀 컴포넌트로 렌더링하도록 정의한 MDXComponents 타입의 객체입니다.
+- Callout이 잘 보이지 않아 blockquote의 스타일을 보다 명확하게 변경했습니다.
+- 코드 블럭의 파싱을 위해 pre와 code 컴포넌트를 추가했습니다. pre는 코드 블럭을 감싸는 컨테이너이고, code는 실제 코드를 렌더링하는 컴포넌트입니다.
+
+```tsx
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import { mdxComponents } from '@/components/mdx';
+
+const Home = async () => {
+  // ...생략
+
+  return (
+    <main className="p-4">
+      <MDXRemote source={content} components={mdxComponents} />
+    </main>
+  );
+};
+```
+
+- `next-mdx-remote` 라이브러리는 MDX 콘텐츠를 파싱하고, MDXComponents 객체에 정의된 커스텀 컴포넌트로 렌더링하는 MDXRemote 컴포넌트를 제공합니다.
+- source: 파싱하고자 하는 MDX 콘텐츠를 전달합니다.
+- components: MDX 콘텐츠를 파싱할 때 사용할 MDXComponents 객체를 전달합니다. 새롭게 정의한 mdxComponents 객체를 전달했습니다.
+- MDXRemote 컴포넌트는 전달받은 MDX 콘텐츠를 파싱해서, MDXComponents 객체에 정의된 키에 해당하는 컴포넌트를 찾아서 커스텀 컴포넌트로 렌더링합니다. 없다면 기본 HTML 요소로 렌더링합니다.
+
+## 마크다운의 frontmatter와 gray-matter 라이브러리
+
+frontmatter는 마크다운 콘텐츠의 맨 앞에 `---`로 시작해서 `---`로 끝나는 YAML 형식의 메타데이터 블록입니다. gray-matter는 MDX 컨텐츠의 frontmatter와 body를 파싱하는 라이브러리입니다.
+
+```tsx
+import matter from 'gray-matter';
+
+const Home = async () => {
+  // ...생략
+  const { data, content } = matter(fileContents);
+
+  return (
+    <main className="p-4">
+      <h1 className="text-4xl font-black pb-4">{data.title}</h1>
+      <MDXRemote source={content} components={mdxComponents} />
+    </main>
+  );
+};
+```
+
+- gray-matter 라이브러리의 matter 함수를 사용해서 MDX 콘텐츠를 파싱합니다.
+- data는 frontmatter를 파싱하여 얻은 메타데이터 객체입니다.
+- content는 frontmatter를 제외한 나머지 MDX 콘텐츠입니다.
+- 메타데이터의 title 프로퍼티를 사용해서 제목을 표시하는 h1 요소를 추가했습니다.
+
+## fs와 path 모듈을 사용한 파일 시스템 접근
+
+fs는 파일 시스템에 접근하는 Node.js의 내장 모듈입니다. path는 파일 경로를 조작하는 Node.js의 내장 모듈입니다.
+
+```tsx
+import { promises as fs } from 'fs';
+import path from 'path';
+
+const Home = async () => {
+  const filePath = path.join(
+    process.cwd(),
+    'src',
+    'data',
+    'posts',
+    'nextjs-blog',
+    'nextjs-setup.mdx'
+  );
+  const fileContents = await fs.readFile(filePath, 'utf-8');
+
+  // ...생략
+};
+```
+
+- path.join 함수를 사용해서 파일 경로를 조합합니다.
+  - process.cwd()는 현재 작업 디렉토리를 나타냅니다. 즉, 프로젝트 루트 디렉토리입니다.
+  - 대상 MDX 파일의 절대 경로인 ./src/data/posts/nextjs-blog/nextjs-setup.mdx 문자열을 filePath 변수에 할당합니다.
+- fs.readFile 함수를 사용해서 filePath 경로에 있는 파일을 읽어옵니다.
+  - I/O 작업은 비동기로 처리되므로 await 키워드를 사용해서 파일을 읽을 때까지 기다립니다.
+  - 한글 문자열이 포함될 수도 있기 때문에 인코딩 형식을 'utf-8'로 지정했습니다.
+  - 파일을 읽어낸 문자열을 fileContents 변수에 할당합니다.
+
+## 최종 코드
+
+```tsx
+import { promises as fs } from 'fs';
+import path from 'path';
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import matter from 'gray-matter';
+import { mdxComponents } from '@/components/mdx';
+
+const Home = async () => {
+  const filePath = path.join(
+    process.cwd(),
+    'src',
+    'data',
+    'posts',
+    'nextjs-blog',
+    'nextjs-setup.mdx'
+  );
+  const fileContents = await fs.readFile(filePath, 'utf-8');
+  const { data, content } = matter(fileContents);
+
+  return (
+    <main className="p-4">
+      <h1 className="text-4xl font-black pb-4">{data.title}</h1>
+      <MDXRemote source={content} components={mdxComponents} />
+    </main>
+  );
+};
+
+export default Home;
+```
+
+![yarn-building](/static/images/nextjs-blog/mdx-parsing/yarn-build.png)
+
+![yarn-start](/static/images/nextjs-blog/mdx-parsing/yarn-start.png)
+
+- yarn build 명령어를 실행하면, 프로젝트를 빌드하고 .next 디렉토리에 빌드 결과물을 생성합니다.
+- 로그 중에서 Generating static pages (5/5)를 확인할 수 있습니다. 정적 페이지 생성에 성공했습니다.
+- MDX 콘텐츠가 성공적으로 파싱되어 렌더링된 것을 확인할 수 있습니다.
+
+## 마치며
+
+아직 Header, Footer, GNB 등 부족한 요소가 많지만, MDX 콘텐츠를 파싱하는데 성공했습니다. 사실 파싱과 관련해서도 더 많은 작업이 필요합니다. 프로젝트 내 MDX 파일을 읽어서 리스트로 반환하는 로직, next/link를 사용한 라우트, 코드 하이라이팅 등 작업해야할 부분은 많습니다. 내일은 일단 레이아웃을 포함한 Header와 Footer를 작업해 볼 생각입니다.
