@@ -1,0 +1,183 @@
+---
+title: 'Tailwind CSS 적용 및 레이아웃 설정하기'
+date: '2024-10-04 23:29'
+author: 'kayce'
+tags: ['tailwindcss', 'layout', 'responsive', 'wrapper']
+---
+
+## CSS 적용하기
+
+### Tailwind CSS
+
+> Tailwind CSS는 커스텀 디자인 시스템을 구축할 때 사용하는 CSS 프레임워크입니다. Tailwind CSS는 클래스 이름을 통해 스타일을 적용하며, 커스텀 클래스를 추가하여 디자인 시스템을 확장할 수 있습니다.
+
+Next 14 버전부터는 Tailwind CSS를 기본적으로 지원합니다. 예전에 CRA(Create React App)을 사용해서 처음 리액트를 배울때는 CSS-in-JS 방식이 유행했었기 때문에 Emotion 라이브러리를 사용해서 스타일링을 적용했었습니다. Next.js 프레임워크를 배우고 Airbnb 클론코딩을 하면서 Tailwind CSS를 처음 사용했는데, CSS 파일에 별도로 스타일을 작성하거나 CSS-in-JS를 사용할 때에 비해 상대적으로 편리하게 스타일을 적용할 수 있었습니다. 무엇보다 CSS를 적용한 클래스 이름을 고민할 시간을 절약할 수 있었습니다.
+
+아직 CSS의 모든 요소와 속성을 외우지 못했기 때문에 Tailwind CSS를 사용할때는 VSCode의 여러 확장과 [Tailwind CSS 공식 문서](https://tailwindcss.com/docs/container)의 도움을 많이 받고 있습니다.
+
+### Flexbox와 Grid
+
+> Flexbox와 Grid는 CSS 레이아웃을 구성할 때 사용하는 속성입니다. Flexbox는 요소를 수평 또는 수직으로 정렬할 때 사용하며, Grid는 요소를 2차원 그리드로 정렬할 때 사용합니다.
+
+아직까지는 Grid보다는 Flexbox가 더 자주 사용하는 편입니다. Grid는 말 그대로 요소를 2차원 평면에 배치하는데 특화되어 있기 때문에 이론적으로는 복잡한 레이아웃을 구성할 때 편리하게 쓸 수 있어야 합니다. 그런데 생각보다 gap 속성이나 margin과 padding에 따른 세밀한 디자인 조정이 어렵게 느껴집니다.
+
+Flexbox는 왼쪽 상단부터 오른쪽 하단까지 순서대로 요소를 배치하기 때문에 원하는 디자인을 간편하게 구현할 수 있습니다. Tailwind CSS를 적용할때는 일단 요소에 `flex items-center justify-between`과 같은 클래스를 적용하고 나서 세부 조정을 하는 편입니다.
+
+- [flex](https://tailwindcss.com/docs/flex) : `flex` 속성은 요소를 수평 또는 수직으로 정렬할 때 사용합니다. `flex-row`를 사용하면 요소를 수평으로 정렬하고, `flex-col`을 사용하면 요소를 수직으로 정렬합니다.
+- [items-center](https://tailwindcss.com/docs/align-items) : `items-center` 속성은 요소가 Flexbox의 교차 축을 따라 가운데 정렬되도록 합니다. `items-start`를 사용하면 요소가 교차 축의 시작점에 정렬되고, `items-end`를 사용하면 요소가 교차 축의 끝점에 정렬됩니다.
+- [justify-between](https://tailwindcss.com/docs/justify-content) : `justify-between` 속성은 요소가 Flexbox의 주 축을 따라 동일한 간격으로 정렬되도록 합니다. `justify-start`를 사용하면 요소가 주 축의 시작점에 정렬되고, `justify-end`를 사용하면 요소가 주 축의 끝점에 정렬됩니다.
+
+### Margin과 Padding
+
+> Margin과 Padding은 요소의 외부 여백과 내부 여백을 설정할 때 사용하는 속성입니다. Margin은 요소의 외부 여백을 설정하며, Padding은 요소의 내부 여백을 설정합니다.
+
+예전에 Bootstrap4와 Jquery를 사용해서 JSP의 프론트엔드 코드를 작성했을 때는 Margin과 Padding의 개념을 잡는게 쉽지 않았습니다. Margin도 여백을 주고 Padding도 여백을 주는데, 배치된 요소가 늘어감에 따라 예상과는 전혀 다른 디자인이 나오기도 했습니다.
+
+지금은 Margin의 사용은 최대한 자제하고 Padding을 사용해서 요소의 간격을 조절하려고 노력하고 있습니다. Margin은 일견 편하게 여백을 주는 것 같지만, Flexbox 안에 요소가 늘어날수록 일종의 밀림 현상이 발생하는 경우가 잦았습니다. 그래서 요소의 간격을 조절할 때는 Padding을 사용하고, 요소의 위치를 조절할 때는 Flexbox의 속성을 사용하려고 노력하고 있습니다.
+
+- [margin](https://tailwindcss.com/docs/margin) : `m-*` 속성은 요소의 외부 여백을 설정할 때 사용합니다. `m` 뒤에 문자열 `t`, `r`, `b`, `l`, `x`, `y`를 붙여서 상단, 우측, 하단, 좌측, 가로, 세로 방향으로 여백을 설정할 수 있습니다.
+- [padding](https://tailwindcss.com/docs/padding) : `p-*` 속성은 요소의 내부 여백을 설정할 때 사용합니다. `p` 뒤에 문자열 `t`, `r`, `b`, `l`, `x`, `y`를 붙여서 상단, 우측, 하단, 좌측, 가로, 세로 방향으로 여백을 설정할 수 있습니다.
+
+### width와 height
+
+> width와 height는 요소의 너비와 높이를 설정할 때 사용하는 속성입니다. [width](https://tailwindcss.com/docs/width)는 요소의 너비를 설정하며, [height](https://tailwindcss.com/docs/height)는 요소의 높이를 설정합니다.
+
+화면을 구성하면서 가장 많이 고민하는 것은 무엇을 어디에 배치할 것인가입니다. flex와 grid를 사용해서 배치 방법을 결정하더라도, 결국 요소의 크기에 따라 적용되는 스타일이 달라집니다.
+
+- [width](https://tailwindcss.com/docs/width) : `w-*` 속성은 요소의 너비를 설정할 때 사용합니다. `w` 뒤에 문자열 `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `11`, `12`, `auto`, `px`, `full`, `screen`을 붙여서 너비를 설정할 수 있습니다.
+- [height](https://tailwindcss.com/docs/height) : `h-*` 속성은 요소의 높이를 설정할 때 사용합니다. `h` 뒤에 문자열 `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `11`, `12`, `auto`, `px`, `full`, `screen`을 붙여서 높이를 설정할 수 있습니다.
+
+### 반응형 디자인
+
+> 반응형 디자인은 사용자의 화면 크기에 따라 웹사이트의 레이아웃이 변하는 것을 말합니다. 반응형 디자인을 구현할 때는 미디어 쿼리를 사용하거나 Tailwind CSS의 반응형 클래스를 사용할 수 있습니다.
+
+반응형 디자인은 모바일 환경에서도 웹사이트가 잘 보이도록 하는 것을 목표로 합니다. Tailwind CSS는 반응형 디자인을 쉽게 구현할 수 있도록 `sm`, `md`, `lg`, `xl`과 같은 반응형 클래스를 제공합니다. 일단은 layout 단에서 전체 요소를 반응형 클래스로 감싸는 `<Container>` 컴포넌트를 만들어서 일괄 적용할 예정입니다.
+
+## 레이아웃 설정하기
+
+### layout.tsx
+
+> App Router 구조에서 layout.tsx 파일은 전역으로 적용되는 RootLayout을 정의하고 있습니다.
+
+이 파일은 전역 CSS, 폰트, 메타데이터 등의 정보를 가져와서 전체적인 레이아웃을 설정합니다. 이렇게 정보를 관리하면 프로젝트 전역으로 일관된 스타일링을 유지하고 Search Bot이 사이트에 대한 정보를 더 잘 이해할 수 있도록 도움을 줍니다.
+
+```tsx
+export const siteMetadata = {
+  title: 'Kayce의 기술 블로그',
+  author: '김창의',
+  headerTitle: 'KayceTechBlog',
+  description: '웹 개발을 하면서 알게된 것과 느낀 점을 기록합니다.',
+  language: 'en-us',
+  theme: 'system',
+  siteUrl: 'https://kayce.vercel.app/',
+  siteRepo: 'https://github.com/changeuikim/kayce',
+  email: 'cekim.dev@gmail.com',
+  github: 'https://github.com/changeuikim',
+  linkedin: 'https://www.linkedin.com/in/kim-changeui-b81a9b330/',
+  instagram: 'https://www.instagram.com/changeui_kim/',
+};
+```
+
+- 사이트의 메타데이터를 별도의 파일로 관리합니다. 이렇게 하면 사이트의 정보를 한눈에 볼 수 있고, 수정할 때에도 편리합니다.
+
+```tsx
+import type { Metadata } from 'next';
+import localFont from 'next/font/local';
+import './globals.css';
+import { siteMetadata } from '@/data/siteMetadata';
+
+const pretendard = localFont({
+  src: './fonts/Pretendard-Regular.woff2',
+  variable: '--font-pretendard-regular',
+  weight: '100 900',
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteMetadata.siteUrl),
+  title: siteMetadata.title,
+  description: siteMetadata.description,
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang={siteMetadata.language} className={`${pretendard.variable} scroll-smooth`}>
+      <body className="bg-white pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-950 dark:text-white">
+        <main className="mb-auto">{children}</main>
+      </body>
+    </html>
+  );
+}
+```
+
+- 프로젝트의 폰트를 Pretendard로 변경하였습니다. 이 폰트는 [눈누](https://noonnu.cc/font_page/694)에서 다운받을 수 있으며, [SIL 오픈 폰트 라이선스](https://github.com/orioncactus/pretendard/blob/main/LICENSE)를 따르고 있기 때문에 글꼴 단독 판매를 제외한 모든 상업적 행위 및 수정, 재배포가 가능합니다.
+- 기존의 title과 description의 내용을 갈음하고 siteMetadata에서 가져온 정보를 사용하도록 수정하였습니다.
+- 서체 적용을 `body` 태그에서 `html` 태그로 올리고, `scroll-smooth` 클래스를 추가하여 스크롤을 부드럽게 만들었습니다.
+- `body` 태그에는 배경색과 글자색에 관련된 클래스를 몇 가지 추가하였습니다.
+- `pl-[calc(100vw-100%)]` 클래스는 스크롤바에 의해 발생하는 수평 공간 차이를 처리하기 위해 추가했습니다. `100vw`는 뷰포트의 전체 너비를 의미하고, `100%`는 스크롤바를 제외한 사용 가능한 공간입니다. 즉, `100vw-100%`는 스크롤바의 너비를 의미하며, 이 값을 `pl` 속성으로 설정하여 스크롤바의 유무에 따라 컨텐츠의 위치가 변하지 않도록 했습니다.
+- `main` 태그에 `mb-auto` 클래스를 추가하여, 컨텐츠가 부모 컨테이너의 전체 높이를 채우지 않을 때, 남는 공간을 아래쪽 여백으로 채웁니다. 나중에 Footer를 구현했을때 항상 페이지 하단에 위치하도록 하기 위함입니다.
+
+### tailwind.config.js
+
+> 디렉토리 구조에 맞춰서 Tailwind CSS의 설정 파일에 스타일링을 적용할 경로를 설정해야 합니다.
+
+```tsx
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: [
+    './src/app/**/*.{js,ts,jsx,tsx,md,mdx}',
+    './src/layouts/**/*.{js,ts,jsx,tsx,md,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,md,mdx}',
+    './src/data/**/*.{js,ts,jsx,tsx,md,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+      },
+    },
+  },
+  plugins: [],
+};
+export default config;
+```
+
+- `src` 디렉토리와 App Router를 기준으로 스타일링을 적용할 경로를 설정합니다.
+- `app` 하위 경로에는 라우팅과 관련된 파일이 위치하기 때문에 Tailwind CSS를 적용해야 합니다.
+- `layouts` 하위 경로에는 전역 레이아웃을 설정하는 파일이 위치합니다.
+- `components` 하위 경로에는 재사용 가능한 컴포넌트가 위치합니다.
+- `data` 하위 경로에는 사이트의 메타데이터와 포스트 데이터가 위치합니다.
+
+### SectionContainer.tsx
+
+> 앞서 언급한 것처럼 반응형 디자인을 전역으로 적용하기 위해 `<SectionContainer>` 컴포넌트를 만들어서 사용합니다.
+
+이 SectionContainer 컴포넌트는 콘텐츠를 감싸는 래퍼(wrapper) 역할을 하며, 페이지의 여러 섹션에서 일관된 너비와 정렬을 유지하는 데 사용될 수 있습니다.
+
+```tsx
+import { ReactNode } from 'react';
+
+interface Props {
+  children: ReactNode;
+}
+
+const SectionContainer = ({ children }: Props) => {
+  return (
+    <section className="mx-auto max-w-3xl px-4 sm:px-6 xl:max-w-5xl xl:px-0">{children}</section>
+  );
+};
+
+export default SectionContainer;
+```
+
+- max-auto : 좌우 마진을 자동으로 설정하여 섹션을 중앙 정렬합니다.
+- max-w-3xl : 기본적으로 섹션의 최대 너비를 3xl (768px)로 제한합니다.
+- px-4 : 좌우 패딩을 1rem으로 설정합니다. 1rem은 기본 크기인 16px을 의미합니다.
+- sm:px-6 : 소형 화면(sm) 이상에서는 좌우 패딩을 6유닛으로 설정합니다. 이는 1.5rem과 같은 크기입니다.
+- xl:max-w-5xl : 초대형 화면(xl)에서는 최대 너비를 5xl (1024px)로 확장합니다.
+- xl:px-0 : 초대형 화면(xl)에서는 좌우 패딩을 제거합니다.
