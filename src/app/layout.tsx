@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 import { siteMetadata } from '@/data/siteMetadata';
 import SectionContainer from '@/layouts/SectionContainer';
+import Header from '@/layouts/Header';
 
 const pretendard = localFont({
   src: './fonts/Pretendard-Regular.woff2',
@@ -25,6 +26,7 @@ export default function RootLayout({
     <html lang={siteMetadata.language} className={`${pretendard.variable} scroll-smooth`}>
       <body className="bg-white pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-950 dark:text-white">
         <SectionContainer>
+          <Header />
           <main className="mb-auto">{children}</main>
         </SectionContainer>
       </body>
