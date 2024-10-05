@@ -4,15 +4,8 @@ import { MDXRemote } from 'next-mdx-remote/rsc';
 import matter from 'gray-matter';
 import { mdxComponents } from '@/components/mdx';
 
-const Home = async () => {
-  const filePath = path.join(
-    process.cwd(),
-    'src',
-    'data',
-    'posts',
-    'nextjs-blog',
-    'header-and-footer.mdx'
-  );
+const Tags = async () => {
+  const filePath = path.join(process.cwd(), 'src', 'data', 'posts', 'nextjs-blog', 'wsl-setup.mdx');
   const fileContents = await fs.readFile(filePath, 'utf-8');
   const { data, content } = matter(fileContents);
 
@@ -24,4 +17,4 @@ const Home = async () => {
   );
 };
 
-export default Home;
+export default Tags;
