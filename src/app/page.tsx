@@ -11,7 +11,7 @@ const Home = async () => {
     'data',
     'posts',
     'nextjs-blog',
-    'header-setup.mdx'
+    'header-and-footer.mdx'
   );
   const fileContents = await fs.readFile(filePath, 'utf-8');
   const { data, content } = matter(fileContents);

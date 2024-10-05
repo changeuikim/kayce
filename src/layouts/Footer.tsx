@@ -1,6 +1,6 @@
-import Link from '@/components/common/Link';
-import { siteMetadata } from '@/data/siteMetadata';
 import SocialIcon from '@/components/icon';
+import { siteMetadata } from '@/data/siteMetadata';
+import Link from '@/components/common/Link';
 
 const Footer = () => {
   return (
