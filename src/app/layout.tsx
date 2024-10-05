@@ -4,6 +4,7 @@ import './globals.css';
 import { siteMetadata } from '@/data/siteMetadata';
 import SectionContainer from '@/layouts/SectionContainer';
 import Header from '@/layouts/Header';
+import Footer from '@/layouts/Footer';
 
 const pretendard = localFont({
   src: './fonts/Pretendard-Regular.woff2',
@@ -28,6 +29,7 @@ export default function RootLayout({
         <SectionContainer>
           <Header />
           <main className="mb-auto">{children}</main>
+          <Footer />
         </SectionContainer>
       </body>
     </html>
