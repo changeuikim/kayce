@@ -1,19 +1,14 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-import { MDXRemote } from 'next-mdx-remote/rsc';
+import { getPostPaths } from '@/lib/post';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import matter from 'gray-matter';
+import { MDXRemote } from 'next-mdx-remote/rsc';
 import { mdxComponents } from '@/components/mdx';
 
 const PostBody = async () => {
-  const filePath = path.join(
-    process.cwd(),
-    'src',
-    'data',
-    'posts',
-    'nextjs-blog',
-    'header-and-footer.mdx'
-  );
-  const fileContents = await fs.readFile(filePath, 'utf-8');
+  const filePaths = await getPostPaths();
+  const filePath = filePaths[7];
+  const fileContents = await fs.readFile(path.join(filePath, 'content.mdx'), 'utf-8');
   const { data, content } = matter(fileContents);
 
   return (
