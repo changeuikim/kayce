@@ -1,0 +1,350 @@
+---
+title: 'Windows Subsystem for Linux 2 (WSL2)를 사용하여 Windows에서 UNIX 개발 환경을 구축하기'
+date: '2024-10-01 18:07'
+author: 'kayce'
+tags: ['setup', 'wsl2', 'ubuntu', 'zsh']
+---
+
+## WSL2 설치하기
+
+### 왜 WSL2를 사용하는가?
+
+> 웹 관련 개발을 하다보면 UNIX 환경에서 개발하는 것이 편리한 경우가 많습니다.
+
+이번에 MDX를 파싱하여 정적 페이지를 생성하는 프로젝트를 진행하면서 Node의 fs 모듈의 경로 해석과 관련해서 문제를 겪었습니다. 윈도우는 경로 구분자를 역슬래시(`\`)로 사용하는 반면, UNIX 계열의 운영체제는 슬래시(`/`)를 사용합니다. 이 문제를 해결하기 위한 몇가지 대안이 있었습니다.
+
+1. Mac으로 개발환경을 옮긴다.
+2. Linux 환경을 전제로 개발을 하고, Dockerfile과 docker-compose를 작성하여 실행 결과를 확인한다.
+3. Microsoft사에서 제공하는 dev-container를 사용하여 Linux 컨테이너에서 개발을 진행한다.
+4. Windows Subsystem for Linux 2 (WSL2)를 사용하여 Windows에서 UNIX 환경을 구축한다.
+
+아직은 윈도우 환경에서 개발하는 이점이 있었기에 1번은 보류했습니다. 도커 사용이 익숙하기에 2번도 나쁘지는 않았지만, 디버깅 시에 문제의 원인을 추적하기 어려울 것으로 보였습니다. dev-container는 생각보다 괜찮은 개발 환경을 제공했지만, 체감상 빌드 속도가 더 느리다는 느낌이 있었습니다. Vite와 Next.js를 사용해서 React 애플리케이션을 개발할때 예전에 WSL2에서 개발해 본 경험이 있기에 다시 한번 사용해보기로 했습니다.
+
+### WSL2 설치하기
+
+> WSL2는 [Linux용 Windows 하위 시스템 설명서](https://learn.microsoft.com/ko-kr/windows/wsl/)에서 자세한 설명을 확인할 수 있습니다.
+
+Microsoft 사에서 제공하는 기능이기에 해당 가이드를 따르면 편하게 설치할 수 있습니다. 윈도우 11 이후의 사용자는 간단한 방법으로 WSL2 활성화가 가능합니다.
+
+1. Windows 10 버전 2004 이상이나 Windows 11 버전 이상의 윈도우 운영체제가 필요합니다.
+2. 관리자 권한으로 PowerShell을 실행합니다.
+3. wsl --install 명령어를 실행합니다.
+4. Ubuntu 실행에 필요한 환경이 자동으로 설정되며 컴퓨터가 다시 시작됩니다.
+
+![wsl-install](/static/images/nextjs-blog/wsl-setup/wsl-install.png)
+
+- 사용자 이름과 암호를 입력해야 합니다. Ubuntu에서 사용할 루트 계정이기 때문에 윈도우랑 완전히 별개로 설정하면 됩니다.
+- linux는 암호 입력시 화면에 표시되지 않으므로 당황하지 않고 암호와 암호 확인을 입력하면 됩니다.
+- 현재 시점의 리눅스 장기 지원 버전은 Ubuntu 22.04.3 LTS 입니다.
+
+### Ubuntu 패키지 업데이트 및 업그레이드
+
+> Ubuntu는 Debian 계열의 리눅스 배포판으로, 패키지 관리자로 apt를 사용합니다.
+
+패키지 관리자는 리눅스 운영체제에서 사용하는 소프트웨어를 설치하고 관리하는 도구입니다. apt는 Advanced Packaging Tool의 약자로, Debian 계열의 리눅스 배포판에서 사용하는 패키지 관리자입니다. Red Hat 계열의 리눅스 배포판에서는 yum이나 dnf를 사용합니다. 윈도우의 경우에도 Chocolatey나 Scoop을 사용하여 패키지를 관리할 수 있습니다.
+
+```bash
+sudo apt update -y && sudo apt upgrade -y
+```
+
+- apt update 또는 apt-get update 명령어를 사용해 패키지 목록을 업데이트 할 수 있습니다. 패키지 매니저는 Ubuntu의 아카이브 서버에서 설치 가능한 패키지 목록을 받아옵니다.
+- apt upgrade 또는 apt-get upgrade 명령어를 사용해 설치된 패키지를 최신 버전으로 업그레이드 할 수 있습니다. apt list --upgradable 명령어로 업그레이드 가능한 패키지 목록을 확인할 수 있습니다.
+- 패키지 업데이트 또는 업그레이드는 보다 높은 권한을 요구하는 작업입니다. sudo 명령어를 사용하면 root 권한으로 실행할 수 있습니다. 이때 처음에 설정한 사용자 암호를 입력해야 합니다.
+- 패키지 업데이트 및 업그레이드 과정에서 [y/n]으로 사용자의 동의를 받는 경우가 있는데, -y 옵션을 사용하면 모든 사항에 대해 동의한 것으로 간주하고 설치를 진행합니다.
+
+```bash
+Fetched 170 MB in 2min 26s (1164 kB/s)
+Extracting templates from packages: 100%
+Preconfiguring packages ...
+(Reading database ... 24208 files and directories currently installed.)
+
+...
+
+Welcome to Ubuntu 22.04.5 LTS (GNU/Linux 5.15.153.1-microsoft-standard-WSL2 x86_64)
+```
+
+- 생각보다 많은 패키지가 업그레이드 되었는데, 보통은 이보다는 적었습니다. Ubuntu의 버전이 올라가면서 업그레이드가 많이 되었을 수도 있습니다.
+- 일반적으로 프로그램의 버전은 [semantic versioning](https://semver.org/)을 사용해서 표시합니다. Ubuntu 22.04.3 LTS의 경우 Ubuntu가 프로그램명, 22가 MAJOR 버전, 04가 MINOR 버전, 3이 PATCH 버전입니다.
+- 실제로 Ubuntu 22.04.5 LTS로 패치 버전의 업그레이드가 있었습니다.
+
+```bash
+Current default time zone: 'Asia/Seoul'
+Local time is now:      Tue Oct  1 14:51:52 KST 2024.
+Universal Time is now:  Tue Oct  1 05:51:52 UTC 2024.
+Run 'dpkg-reconfigure tzdata' if you wish to change it.
+```
+
+- 중간에 시간대 설정이 나오는데, 제 호스트 PC의 시간대에 따라 'Asia/Seoul'로 설정되었습니다.
+- git의 커밋 시간 등이 시스템 시간대를 따르기 때문에 Ubuntu와 호스트 PC의 시간대가 다르지 않도록 유의하는 것이 좋습니다.
+
+## 개발 프로그램 설치하기
+
+### git 설치하기
+
+> WSL2에는 보통 git이 설치되어 있지만, [Linux용 Windows 하위 시스템에서 Git 사용 시작](https://learn.microsoft.com/ko-kr/windows/wsl/tutorials/wsl-git)에 따라 다시 설정할 수도 있습니다.
+
+```bash
+PS C:\Users\kce> git --version
+git version 2.45.2.windows.1
+
+kayce@CreativeKim:~$ git --version
+git version 2.34.1
+```
+
+- 호스트 PC와 WSL2의 git 버전이 다른 것을 확인할 수 있습니다. 둘이 완전히 분리된 환경에 속한다는 의미이기도 합니다.
+- 하지만 WSL2에서 호스트 PC에 접근할 수 없는 것은 아닙니다. C:\Users\kce 디렉토리에 접근하려는 경우 /mnt/c/Users/kce를 사용하면 Windows 파일 디렉토리에 액세스 할 수 있습니다. Linux 입장에서 Windows 파일 시스템을 마운트 된 볼륨으로 인식하기 때문입니다.
+
+```bash
+sudo apt install git
+```
+
+![git-install](/static/images/nextjs-blog/wsl-setup/git-install.png)
+
+- git을 설치하기 위해서는 apt 패키지 관리자를 사용합니다. apt install git 명령어로 git을 설치할 수 있습니다.
+- 직전에 패키지 업그레이드를 진행했기 때문에 git이 이미 최신 버전으로 설치되어 있는 것을 확인할 수 있습니다.
+
+```bash
+git config --global user.name "changeuikim"
+git config --global user.email "cekim.dev@gmail.com"
+```
+
+![ls-la](/static/images/nextjs-blog/wsl-setup/ls-la.png)
+![git-config](/static/images/nextjs-blog/wsl-setup/git-config.png)
+
+- ls -la 명령어는 현재 디렉토리의 파일을 보여주는 ls 명령어에 리스트 형식으로 보여주는 -l 옵션과 숨김 파일을 보여주는 -a 옵션을 사용한 것입니다.
+- user.name과 user.email은 git의 커밋을 할 때 사용하는 사용자 이름과 이메일 주소를 설정하는 명령어입니다. 제 GitHub 계정의 사용자 이름과 이메일 주소를 사용했습니다.
+- .git 폴더에는 .gitconfig 파일 내에 해당 저장소에서 사용할 메타데이터가 저장되어 있습니다. --global 옵션을 사용하면 해당 파일을 사용자 홈 디렉토리에 저장하고 전역으로 적용합니다.
+- .gitconfig 파일의 우선도는 저장소의 .git 폴더에 있는 .gitconfig 파일이 가장 높고, 사용자 홈 디렉토리에 있는 .gitconfig 파일이 그 다음이며, git 설치 디렉토리에 있는 .gitconfig 파일이 가장 낮습니다.
+
+```bash
+ssh-keygen -t ed25519 -C "cekim.dev@gmail.com"
+```
+
+![ssh-keygen](/static/images/nextjs-blog/wsl-setup/ssh-keygen.png)
+
+- GitHub를 사용하여 git 작업을 하려면 HTTPS나 SSH를 사용할 수 있는데, 최근 SSH를 권장하고 있습니다. SSH 키를 생성하기 위해 ssh-keygen 명령어를 사용합니다.
+- ed25519는 공개키 암호화 알고리즘 중 하나로, RSA보다 더 안전하고 빠릅니다. 이전에는 RSA 키 서명 알고리즘을 주로 사용했습니다. -t 옵션으로 알고리즘을 선택할 수 있습니다.
+- -C 옵션은 주석을 추가하는 옵션입니다. GitHub에 등록할 때 어떤 키인지 알 수 있도록 이메일 주소를 추가했습니다.
+- 처음에 키를 저장할 파일을 입력하라고 나오는데, 기본값으로 엔터를 누르면 사용자 홈 디렉토리에 .ssh 디렉토리에 id_ed25519와 id_ed25519.pub 파일이 생성됩니다. 전자는 개인키, 후자는 공개키입니다.
+- 이어서 나오는 passphrase는 키를 사용할 때 입력해야 하는 비밀번호입니다. 저장소 push나 pull 마다 입력해야 하기에, 비밀번호를 사용하지 않는 사람도 꽤 있습니다.
+- GitHub 홈페이지에서 프로필 > Settings > SSH and GPG keys > New SSH key를 클릭하여 ide_ed25519.pub 파일의 내용을 복사하여 등록합니다.
+
+### VS Code에서 WSL2 사용하기
+
+> Visual Studio Code는 WSL2를 지원하며, WSL 확장을 설치하면 WSL2에서 VS Code를 사용할 수 있습니다.
+
+호스트 PC에 Visual Studio Code를 설치하면 됩니다. 없다면 [홈페이지](https://code.visualstudio.com/)에서 Download for Windows를 클릭하여 설치합니다. Ctrl+Shift+X를 눌러서 Extensions 탭에서 WSL을 검색하여 설치합니다. Microsoft 사에서 정식으로 제공하고 있으며 Remote - SSH 등 관련 확장이 함께 설치될 수 있습니다.
+
+```bash
+code .
+```
+
+- WSL2의 터미널에서 code . 명령어를 사용하면 현재 디렉토리를 대상으로 Visual Studio Code를 실행할 수 있습니다.
+- 이때 VS Code는 사용자 인터페이스를 제공하는 Windows 환경을 클라이언트로, 코드, git, 플러그인 등을 제공하는 WSL2 환경을 서버로 인식합니다.
+- VS Code는 이와 유사하게 devcontainer.json 파일로 설정하는 [development container](https://code.visualstudio.com/docs/devcontainers/containers) 개발 환경을 제공하기도 합니다.
+
+### Docker Desktop과 WSL2
+
+> Docker Desktop을 사용한다면 이미 WSL2를 사용하고 있을 수 있습니다. Docker Desktop은 WSL2를 사용하여 Linux 컨테이너를 실행합니다.
+
+![docker-desktop](/static/images/nextjs-blog/wsl-setup/docker-desktop.png)
+
+Linux 개발환경을 구축하기 위해 wsl --install 등을 통해 Ubuntu를 설치하였지만, 윈도우 탐색기를 보면 Linux 하위에 Ubuntu와는 별도로 docker-desktop이 있는 사람도 있을 것입니다. [Docker Desktop을 설치](https://www.docker.com/products/docker-desktop/)하는 과정에서 WSL2에 대한 설정이 이미 포함되어 있습니다. 윈도우 프롬프트와 마찬가지로 Docker Desktop을 실행하기 전에는 docker 명령어를 확인할 수 없지만, 실행 후에는 WSL2의 터미널에서도 docker 명령어를 사용할 수 있습니다.
+
+### Node.js 설치하기
+
+> Node는 버전 번경이 잦은 프로그램이기 때문에 직접 설치보다는 버전 관리자를 사용하는 것이 좋습니다.
+
+Node.js는 JavaScript 런타임 환경으로 Vite나 Next.js를 사용한 React 애플리케이션 개발에 필수적입니다. 최근 Volta, fnm 등 대체 버전 관리자가 인기를 얻고 있지만, Node Version Manager(nvm)가 가장 널리 사용되어 왔기에 이를 사용하겠습니다.
+
+```bash
+sudo apt-get install curl
+```
+
+- curl은 URL을 통해 데이터를 전송하는 명령어입니다. nvm이나 zsh 등을 설치할 때 사용합니다.
+- 최신 버전의 Ubuntu에는 이미 설치되어 있을 수 있습니다.
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
+```
+
+![nvm-install](/static/images/nextjs-blog/wsl-setup/nvm-install.png)
+
+- curl 명령어를 사용해 깃허브 저장소의 install.sh 스크립트를 다운로드 받아 bash 명령어로 실행합니다.
+- .nvm 경로에 nvm 프로젝트가 클론되고, .bashrc 파일에 nvm을 초기화하는 스크립트가 추가됩니다.
+- nvm 경로 관련 환경변수인 NVM_DIR가 추가됩니다.
+- 이후 터미널을 재시작하거나 source ~/.bashrc 명령어를 사용하여 .bashrc 파일을 다시 읽어야 합니다.
+
+```bash
+nvm --version
+nvm ls
+nvm install --lts
+node --version
+npm --version
+which node
+which npm
+```
+
+![nvm-version](/static/images/nextjs-blog/wsl-setup/nvm-version.png)
+![node-version](/static/images/nextjs-blog/wsl-setup/node-version.png)
+
+- nvm --version 명령어로 nvm의 설치 여부와 버전을 확인할 수 있습니다.
+- nvm ls 명령어로 현재 설치된 Node.js 버전을 확인할 수 있습니다. 아직 설치된 버전이 없기에 아무것도 나오지 않습니다.
+- nvm install --lts 명령어로 Node.js의 LTS 버전을 설치할 수 있습니다. 현재 LTS 버전은 20.17.0입니다.
+- 설치 이후에는 node --version, npm --version 명령어로 Node.js와 npm의 버전을 확인할 수 있습니다.
+- which node, which npm 명령어로 Node.js와 npm의 실행 경로를 확인할 수 있습니다.
+
+```bash
+yarn install
+```
+
+![yarn-install](/static/images/nextjs-blog/wsl-setup/yarn-install.png)
+
+- yarn은 npm과 유사한 패키지 매니저로, npm보다 빠르고 안정적이라고 알려져 있습니다.
+- npm install -g yarn 명령어로 전역으로 설치할 수 있습니다. 이후에는 yarn install 명령어로 프로젝트의 의존성을 설치할 수 있습니다.
+- yarn은 의존성을 추가할때 add, 삭제할때 remove, 업데이트할때 upgrade 등의 명령어를 사용합니다.
+
+## 개발환경 개선하기
+
+### Ubuntu에 터미널로 접속하기
+
+> WSL2의 Ubuntu에는 네 가지 정도의 방식으로 접속이 가능합니다.
+
+- Power Shell에서 wsl -d ubuntu로 접속
+- 명령 프롬프트에서 wsl -d ubuntu로 접속
+- WSL 터미널에서 bash로 접속
+- Ubuntu 터미널에서 bash로 접속
+
+파워 쉘은 윈도우 명령어와 리눅스 명령어를 모두 지원하기 때문에 강력하지만, 순수 리눅스 명령어를 전부 지원하지는 않습니다. 명령 프롬프트는 파워 쉘 보다도 지원하는 범위가 제한적입니다. WSL와 Ubuntu는 bash 쉘을 사용하기에 순수 리눅스 환경을 사용한다는 점에서는 동일합니다. WSL는 Windows Terminal을 사용하여 쉘을 관리하기에 이것을 사용하고자 합니다.
+
+![wsl-root](/static/images/nextjs-blog/wsl-setup/wsl-root.png)
+
+WSL을 실행시 기본적으로 root 사용자로 접속된 것을 확인할 수 있습니다. 이는 Ubuntu보다 Docker Desktop이 먼저 설치되었기에 WSL이 기본 대상으로 docker-desktop을 사용하고 있기 때문입니다. 이를 해결하기 위해 다음과 같이 설정을 변경합니다.
+
+```bash
+wsl --list --verbose
+wsl --set-default Ubuntu
+wsl --list --verbose
+```
+
+![wsl-ubuntu](/static/images/nextjs-blog/wsl-setup/wsl-ubuntu.png)
+
+- wsl --list --verbose 명령어로 현재 설치된 WSL2의 목록을 확인할 수 있습니다. docker-desktop 왼쪽의 \* 표시는 기본 대상이라는 의미입니다.
+- wsl --set-default Ubuntu 명령어로 Ubuntu를 기본 대상으로 설정합니다.
+- wsl --list --verbose 명령어로 다시 확인하면 Ubuntu가 \* 표시로 기본 대상으로 설정된 것을 확인할 수 있습니다.
+- 이후에는 WSL 터미널 실행시 Ubuntu로 접속되는 것을 확인할 수 있습니다.
+
+### zsh 설치하기
+
+> zsh는 bash의 확장된 셸로, 플러그인과 테마를 사용할 수 있어 인기가 있습니다.
+
+```bash
+sudo apt-get install zsh
+```
+
+![zsh-install](/static/images/nextjs-blog/wsl-setup/zsh-install.png)
+
+```bash
+zsh --version
+echo $SHELL
+chsh -s /usr/bin/zsh
+```
+
+![echo-shell](/static/images/nextjs-blog/wsl-setup/echo-shell.png)
+
+- zsh를 설치하기 위해 apt-get install zsh 명령어를 사용합니다.
+- zsh --version 명령어로 zsh의 버전을 확인할 수 있습니다.
+- echo $SHELL 명령어로 현재 사용 중인 쉘을 확인할 수 있습니다. 기본값은 bash입니다.
+- chsh -s /usr/bin/zsh 명령어로 사용자의 기본 쉘을 zsh로 변경할 수 있습니다. 이후에는 터미널을 재시작하거나 source ~/.zshrc 명령어를 사용하여 .zshrc 파일을 다시 읽어야 합니다.
+
+![zsh-config](/static/images/nextjs-blog/wsl-setup/zsh-config.png)
+
+- 터미널을 다시 실행하면 Z Shell의 설정이 시작되는데, oh-my-zsh를 통해 설정할 것이기에 2번을 눌러 기본 설정을 적용합니다.
+- echo $SHELL 명령어 사용시 쉘의 기본 경로가 /usr/bin/zsh로 잘 변경된 것을 확인할 수 있습니다.
+
+### oh-my-zsh 설치치 및 테마 적용하기
+
+> [oh-my-zsh](https://ohmyz.sh/#install)는 zsh의 확장 프레임워크로, 다양한 플러그인과 테마를 사용할 수 있게 해줍니다.
+
+```bash
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+```
+
+![oh-my-zsh](/static/images/nextjs-blog/wsl-setup/oh-my-zsh.png)
+
+- .zshrc에 oh-my-zsh의 설정이 추가되고, 플러그인과 테마를 설치할 수 있습니다.
+- ZSH_THEME="agnoster"로 테마를 설정하면 agnoster 테마가 적용됩니다.
+
+```bash
+mkdir github
+cd github
+git init
+git config --global init.defaultBranch main
+git branch -M main
+git config user.name
+git config user.email
+```
+
+![zsh-agnoster](/static/images/nextjs-blog/wsl-setup/zsh-agnoster.png)
+
+- AGNOSTER 테마가 잘 적용되는지 확인하기 위해 github 디렉토리를 생성하고, git init 명령어로 git 저장소를 초기화합니다.
+- 경로는 ~/github로, 브랜치는 아이콘과 문자로 잘 표시되는 것을 확인할 수 있습니다. 터미널 폰트에 따라 아이콘이 깨지기도 하는데, 저는 Naver에서 제공하는 D2Coding 폰트를 사용하기 때문에 깨지지 않습니다.
+- 과거에는 git이 Master 브랜치라는 명칭을 사용하였지만, 이슈 제기로 인해 Main 브랜치를 사용하는 편입니다. git config --global init.defaultBranch main 명령어로 git 저장소의 기본 브랜치를 Main으로 설정할 수 있습니다.
+- git config user.name과 git config user.email 명령어를 사용해보면 앞서 글로벌로 설정한 사용자 이름과 이메일 주소가 나오는 것을 확인할 수 있습니다.
+
+### zsh 플러그인 설치하기
+
+> [zsh 커뮤니티](https://github.com/zsh-users)에서 하이라이트, 자동완성 등 다양한 플러그인을 제공합니다.
+
+```bash
+cd ~/.oh-my-zsh/custom/plugins
+git clone git@github.com:zsh-users/zsh-syntax-highlighting.git
+git clone git@github.com:zsh-users/zsh-autosuggestions.git
+```
+
+![zsh-plugins](/static/images/nextjs-blog/wsl-setup/zsh-plugins.png)
+
+- zsh-syntax-highlighting은 zsh 명령어를 입력할 때 문법에 따라 색상을 입히는 플러그인입니다.
+- zsh-autosuggestions는 zsh 명령어를 입력할 때 이전에 입력한 명령어를 추천해주는 플러그인입니다.
+- oh-my-zsh의 plugins 디렉토리에 각각의 플러그인을 git clone 명령어로 다운로드 받습니다.
+
+```bash
+echo "source ${(q-)PWD}/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" >> ${ZDOTDIR:-$HOME}/.zshrc
+echo "source ${(q-)PWD}/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ${ZDOTDIR:-$HOME}/.zshrc
+vim ~/.zshrc
+source ~/.zshrc
+```
+
+```bash
+plugins=(git)
+
+plugins=(git zsh-syntax-highlighting zsh-autosuggestions)
+```
+
+![zshrc](/static/images/nextjs-blog/wsl-setup/zshrc.png)
+
+- echo 명령어로 zsh-syntax-highlighting과 zsh-autosuggestions의 설정을 .zshrc 파일에 추가합니다.
+- vim ~/.zshrc 명령어로 .zshrc 파일을 열어서 plugins 항목에 zsh-syntax-highlighting과 zsh-autosuggestions를 추가합니다.
+- source ~/.zshrc 명령어로 .zshrc 파일을 다시 읽어서 설정을 적용합니다.
+- 바로 이어서 사용한 source 명령어의 색상이 녹색으로 표시되는 것을 확인할 수 있습니다.
+- \_docker 관련된 오류는 Docker Desktop이 실행되지 않아 발생하는 것으로, Docker Desktop을 실행하면 해결됩니다.
+- s까지 쳤을때 뒤에 연한 색상으로 이전에 입력한 명령어가 나오는 것을 확인할 수 있습니다.
+
+### zsh에 nvm 환경변수 추가하기
+
+> zsh에서는 .bashrc 대신 .zshrc 파일을 사용하기에, 환경변수 설정도 .zshrc 파일에 추가해야 합니다.
+
+nvm을 설치할 때 bash의 설정 파일에는 경로에 관한 환경변수가 추가되었지만, zsh의 설정 파일에는 추가되지 않았습니다. 이를 해결하기 위해 아래와 같은 내용을 .zshrc 파일의 하단에 추가합니다.
+
+```bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+```
+
+- .bashrc 파일에 추가된 내용과 동일합니다. NVM_DIR 환경변수를 설정하고, nvm.sh와 bash_completion 파일을 실행하는 내용입니다.
+- 이후에는 source ~/.zshrc 명령어로 .zshrc 파일을 다시 읽어서 설정을 적용합니다.
+
+## 마치며
+
+한동안 WSL2를 사용해서 Linux 환경에서 개발을 하다가 그만둔 적이 있습니다. 그때는 한창 VS Code를 사용해서 Next.js 프로젝트를 로컬에서 개발할 때라 WSL2에서 제공하는 기능을 유용하게 사용했습니다. 다시 본업으로 돌아와서 IntelliJ로 Spring Boot를 개발하고 Code Pipeline을 사용해 CI/CD를 구축하면서 상대적으로 Linux 환경의 필요성이 줄어들었습니다. 이번에 인프라부터 FE와 BE까지 한 사이클을 돌리는 프로젝트를 기획하면서 다시 WSL2를 제대로 설정해보고자 이렇게 과정을 기록으로 남깁니다.

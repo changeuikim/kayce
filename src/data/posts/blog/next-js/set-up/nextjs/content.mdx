@@ -1,0 +1,130 @@
+---
+title: '인프라 구축부터 서버 개발 및 배포까지의 과정을 기록해나가는 Next 14 블로그 프로젝트 시작하기'
+date: '2024-10-01 22:44'
+author: 'kayce'
+tags: ['setup', 'nextjs', 'shadcn', 'vercel']
+---
+
+## 프로젝트 개요
+
+### 프로젝트 목적
+
+신규 론칭되는 서비스에 백엔드 개발자로 참여하면서 인프라 구축에도 관여한 경험을 토대로 인프라 구축부터 서버 개발 및 배포까지의 과정을 기록해나가는 블로그 프로젝트를 진행하고자 합니다.
+
+### 주요 기능
+
+직접 구축하는 인프라와는 별도로 그 과정을 기록할 수 있는 블로그를 Next.js로 구현하고 Vercel에 배포합니다. 해당 블로그에 구현하고자 하는 기능은 다음과 같습니다.
+
+- Next 14 버전의 App Router에 기반한 페이지 라우팅
+- Tailwind CSS와 shadcn/ui를 활용한 사용자 친화적인 UI/UX 구현
+- MDX 라이브러리를 사용하여 마크다운 문서와 JSX를 혼합하여 렌더링
+- gray-matter 라이브러리를 사용하여 메타데이터를 추출
+- giscus 라이브러리를 사용하여 GitHub Issue를 댓글로 활용
+- Global Navigation Bar에 Posts, Tags, About 등의 네비게이션 메뉴 구현
+
+### 개발 기간
+
+개발 인력: 1명  
+목표 기간: 2024년 10월 1일 ~ 2024년 12월 31일
+
+## Next.js 프로젝트 생성
+
+### Next.js란?
+
+Next.js는 React 기반의 프레임워크로, CSR(Client-Side Rendering)과 SSR(Server-Side Rendering)을 지원하며, 정적 페이지 생성, API 라우팅, 파일 시스템 기반의 라우팅 등 다양한 기능을 제공합니다. Next.js는 Vercel에서 개발한 오픈소스 프로젝트로, Vercel의 서비스와 연동하여 쉽게 배포할 수 있습니다.
+
+13 버전에서는 SSR 렌더링을 위한 getServerSideProps 함수와 SSG 렌더링을 위한 getStaticProps 함수를 사용하였습니다. 14 버전에서는 App Router를 도입하고 모든 컴포넌트를 서버 컴포넌트로 적용하여 자동으로 SSR 렌더링 또는 SSG 렌더링이 적용됩니다. 필요에 따라 컴포넌트 상단에 'use client'를 추가하여 클라이언트 컴포넌트로서 CSR 렌더링을 적용할 수 있습니다.
+
+이번 프로젝트에서는 App Router와 MDX를 사용하여 마크다운 문서를 정적 페이지로 렌더링할 예정입니다.
+
+### Next.js 설치
+
+> Next 14의 설치에는 Node.js 18.18 이상의 버전이 필요합니다.
+
+```bash
+npx create-next-app@latest [프로젝트명] [옵션]
+```
+
+- 기본적으로는 npx create-next-app 명령어로 Next.js 프로젝트를 생성할 수 있습니다.
+- create-next-app의 CLI에는 다양한 [옵션](https://nextjs.org/docs/app/api-reference/cli/create-next-app)이 제공됩니다.
+- 일부 옵션은 기본값으로 적용되고, 일부 옵션은 설치시 가이드를 통해 선택할 수 있습니다.
+- 이번 프로젝트에서 사용할 옵션은 다음과 같습니다
+  - --ts: TypeScript 설정을 초기화
+  - --tailwind: Tailwind CSS 설정을 초기화
+  - --eslint: ESLint 설정을 초기화
+  - --app: App Router가 적용된 프로젝트로 생성
+  - --src-dir: src/ 하위에 컴포넌트 및 페이지를 생성
+  - --import-alias "@/\*": src/ 디렉토리를 @로 별칭을 적용
+  - --use-yarn: Yarn 패키지 매니저를 사용
+
+```bash
+npx create-next-app kayce --ts --tailwind --eslint --app --src-dir --import-alias "@/*" --use-yarn
+```
+
+![npx-next](/static/images/nextjs-blog/nextjs-setup/npx-next.png)
+
+#### Dependencies 설명
+
+- react: React 애플리케이션의 핵심 라이브러리로 리액트 요소를 생성하는 createElement 함수를 제공합니다.
+- react-dom: React 애플리케이션의 핵심 라이브러리로 가상 DOM의 루트를 생성하는 createRoot 함수를 제공합니다.
+- next: Next.js 프레임워크의 핵심 라이브러리로 페이지 라우팅, 데이터 통합, 빌드 및 배포 등의 기능을 제공합니다.
+
+#### DevDependencies 설명
+
+- typescript: JavaScript에 타입을 추가하는 정적 타입 검사 도구로, TypeScript 컴파일러를 제공합니다.
+- @types/node, @types/react, @types/react-dom: TypeScript에서 Node.js, React, React DOM의 타입을 사용할 수 있도록 타입 정의 파일을 제공합니다.
+- postcss: CSS 전처리기로, CSS 파일을 파싱하여 브라우저에서 해석할 수 있는 CSS로 변환합니다.
+- tailwindcss: CSS 프레임워크로, 클래스 기반의 스타일을 적용하여 빠르게 디자인을 구현할 수 있습니다.
+- eslint: JavaScript 코드의 문법 검사 도구로, 코드 품질을 향상시키고 일관된 코딩 스타일을 유지할 수 있습니다.
+- eslint-config-next: Next.js 프로젝트에서 ESLint를 사용할 때 필요한 설정 파일을 제공합니다.
+
+### Next.js 실행
+
+```bash
+yarn dev
+```
+
+![next-sample](/static/images/nextjs-blog/nextjs-setup/next-sample.png)
+![yarn-dev](/static/images/nextjs-blog/nextjs-setup/yarn-dev.png)
+
+- yarn dev 명령어를 실행하면 Next.js 프로젝트가 실행되고, http://localhost:3000 주소로 접속할 수 있습니다.
+- yarn start 명령어는 프로덕션 모드로 빌드된 Next.js 애플리케이션을 실행합니다. .next 폴더에 빌드된 파일을 필요로 합니다.
+- yarn build 명령어는 Next.js 애플리케이션을 빌드합니다. .next 폴더에 빌드된 파일을 생성합니다.
+- 각 명령어는 내부적으로 next dev, next start, next build 명령어를 실행하며, package.json 파일의 scripts 항목에 설정되어 있습니다.
+- '/' 경로에 대한 GET 요청에 200 응답이 오기까지 2019ms가 소요되었습니다. 이는 localhost:3000에 접속하여 페이지를 렌더링하는 시간을 의미합니다.
+- favicon.ico 파일에 대한 GET 요청에 200 응답이 오기까지 1867ms가 소요되었습니다. favicon은 브라우저 탭에 표시되는 아이콘 이미지를 의미합니다.
+- Ctrl + F5 키를 눌러 강력 새로고침을 한 결과, 각각의 응답 시간이 68ms와 13ms로 줄어들었습니다. 이는 개발 모드에서 초기 컴파일에는 시간이 소요되지만, 이후에는 빠르게 렌더링되기 때문입니다.
+
+### Next.js 프로젝트 구조
+
+```bash
+code ~/github/kayce
+```
+
+![directory](/static/images/nextjs-blog/nextjs-setup/directory.png)
+![code](/static/images/nextjs-blog/nextjs-setup/code.png)
+
+#### 페이지 및 컴포넌트 파일
+
+App Router에 src 디렉토리를 사용하기에 페이지 및 컴포넌트 관련 파일은 src/app 디렉토리 하위에 생성됩니다.
+
+- fonts 폴더에 로컬 폰트 파일을 저장할 수 있습니다.
+- favicon.ico 파일은 브라우저 탭에 표시되는 아이콘 이미지입니다.
+- global.css 파일은 전역 스타일을 정의하며, Tailwind CSS의 설정이 이미 적용되어 있습니다.
+- layout.tsx 파일은 폰트와 루트 레이아웃을 정의합니다. 이 파일의 레이아웃은 모든 페이지에 적용됩니다.
+- page.tsx 파일은 루트 페이지로 Next 프로젝트 생성 시에 보일러 플레이트 코드가 작성되어 있습니다.
+
+#### 프로젝트 설정 파일
+
+프로젝트의 루트 경로에는 src 디렉토리에 포함되지 않는 설정 파일들이 생성됩니다.
+
+- .eslintrc.json 파일은 ESLint의 설정파일입니다.
+- .gitignore 파일은 Git에서 제외할 파일 및 디렉토리를 정의합니다.
+- next-env.d.ts 파일은 타입스크립트 컴파일러가 Next.js 프로젝트를 인식할 수 있도록 설정합니다.
+- next.config.mjs 파일은 Next.js 프로젝트의 설정 파일로, 환경 변수, 웹팩 설정, 빌드 설정 등을 정의합니다.
+- package.json 파일은 프로젝트의 의존성 패키지 및 스크립트를 정의합니다.
+- postcss.config.js 파일은 PostCSS의 설정 파일입니다.
+- README.md 파일은 프로젝트의 설명 및 사용법을 정리한 문서입니다.
+- tailwind.config.js 파일은 Tailwind CSS의 설정 파일입니다.
+- tsconfig.json 파일은 타입스크립트의 설정 파일입니다.
+- yarn.lock 파일은 Yarn 패키지 매니저의 의존성 트리를 정의합니다.
