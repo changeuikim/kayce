@@ -1,0 +1,139 @@
+---
+title: 'MDX 블로그 설정하기 (4) - Post[] 타입 리스트 생성하기'
+summary: '프로젝트 내의 모든 MDX 파일을 추출해 파싱하기'
+date: '2024-10-07 23:35'
+lastModified: '2024-10-07 23:35'
+author: 'kayce'
+tags: ['mdx-blog', 'set-up', 'typescript', 'parsing']
+order: [01, 02, 01, 04]
+---
+
+## 추출한 경로를 사용해 MDX 파일 파싱하기
+
+`getPostPaths` 함수의 반환값은 `Promise<string[]>` 타입으로 프로젝트 내 모든 MDX 파일의 경로가 담겨있습니다. 이 배열을 순회하면서 `gray-matter`를 사용해 프론트 매터와 MDX 본문을 추출하고 `Promise<Post[]>` 타입의 배열을 새롭게 반환합니다.
+
+### 타입 정의하기
+
+gray-matter의 matter 함수를 사용하면 프론트 매터와 MDX 본문을 담은 `{ data, content }` 객체를 반환합니다. 추후에 카테고리 목록 생성이나 사이트맵 제작 등에 사용할 수 있는 category, slug 등의 프로퍼티 타입은 `PostMatter`를 상속한 `Post` 인터페이스에 정의했습니다.
+
+```tsx
+export interface PostMatter {
+  title: string;
+  summary: string;
+  date: string;
+  lastModified: string;
+  author: string;
+  tags: string[];
+  order: number[];
+}
+
+export interface Post extends PostMatter {
+  content: string;
+  category: string;
+  slug: string;
+  url: string;
+}
+```
+
+- title : 글의 제목입니다. `h1` 태그로 변환되기 때문에 MDX 본문에는 `#`를 따로 작성하지 않습니다.
+- summary : 글의 요약입니다. 포스트 리스트를 만들때 표시할 100자 이내의 간단한 소개글입니다.
+- date : 글을 작성한 날짜입니다. `days` 사용도 고려중이지만, 아직은 `Date()` 함수를 사용해 직접 구현합니다.
+- lastModified : 마지막으로 수정한 날짜입니다. 지속적인 업데이트 확인을 위해 추가했습니다.
+- author : 작성자는 현재 kayce로 되어있는데, 본명으로 바꿀지는 고민중입니다.
+- tags : 한 포스트당 4개 정도를 사용하고 있습니다. 추후에 태그별 포스트 조회 기능도 추가할 예정입니다.
+- order : 디렉토리 기반으로 경로가 생성되기 때문에 별도의 정렬 조건을 생성했습니다.
+- content : 프론트 매터를 제외한 MDX 파일의 본문입니다.
+- category, slug, url : 현재는 바로 사용할 곳은 없습니다.
+
+### MDX 파일 파싱하기
+
+```tsx
+// src/lib/post.ts
+// MDX 파일을 파싱
+const parsePost = async (postPath: string): Promise<Post> => {
+  const metaData = parsePostMetaData(postPath);
+  const contentData = await parsePostContent(postPath);
+  return { ...metaData, ...contentData };
+};
+```
+
+기존에는 메인 페이지에 특정 MDX 파일을 불러와 data와 content로 파싱하는 로직을 작성했습니다. 포스트의 체계적인 관리를 위해 파싱하는 로직을 `metaData`와 `contentData`를 추출하는 두 개의 함수로 구현합니다.
+
+- `parsePostMetaData` 함수는 경로를 기반으로 category, slug, url 등을 추출합니다.
+- `parsePostContent` 함수는 `gray-matter`를 사용해 front matter와 content를 추출합니다.
+
+#### 함수 배치에 대한 고민
+
+주 언어인 Java는 컴파일 언어이기 때문에 주가 되는 메서드를 상단에 배치하고, 구성 요소가 되는 메서드를 이어서 하단에 배치하는 편입니다. 코딩 테스트 등을 풀 때 주로 사용하는 언어인 Python은 스크립트 언어이기 때문에 dfs, bfs 등 구성 요소가 되는 함수를 미리 정의하고, 정의된 뒤에 하단에서 함수를 호출해 사용할 수 있습니다. JavaScript는 스크립트적 언어적인 성격과 함수 호이스팅 등을 고려하면 어느 쪽도 가능합니다. JavaScript의 언어적인 특성에 대해서는 추후에 `코어 자바스크립트`를 복습하면서 다시 정리해 볼 생각이 있습니다.
+
+이번 프로젝트에서 사용할 유틸리티 함수들은 의존성에 기반한 설계보다는 상위 계층의 함수를 먼저 정의하고, 흐름에 따라 하위 계층의 함수를 정의할 생각입니다. 그래서 `parsePost`의 경우도 상단에 정의하고, 이어서 `parsePostMetaData`와 `parsePostContent`를 하단에 정의합니다.
+
+### PostMetaData 추출하기
+
+`parsePostMetaData` 함수는 경로를 기반으로 category, slug, url 등의 메타데이터를 추출합니다. 이는 나중에 카테고리 페이지, 사이트맵 생성 등의 기능을 구현할 때 사용할 예정입니다.
+
+```tsx
+// src/lib/post.ts
+// MDX 파일의 meta data를 파싱
+const parsePostMetaData = (postPath: string): Post => {
+  const relativePath = path.relative(POSTS_PATH, postPath);
+  const [category, ...slugParts] = relativePath.split(path.sep);
+  const slug = slugParts.join('/');
+  const url = `/posts/${category}/${slug}`;
+
+  return { category, slug, url } as Post;
+};
+```
+
+- [`path.relative`](https://nodejs.org/docs/latest-v20.x/api/path.html#pathrelative) 메서드는 from, to의 두 인자를 받습니다. `from`은 기준 경로이고, `to`는 비교할 경로입니다. `POSTS_PATH`를 기준으로 `postPath`를 비교해 상대 경로를 추출합니다.
+- [`path.sep`](https://nodejs.org/docs/latest-v20.x/api/path.html#pathsep)은 운영체제에 따라 다르게 설정되는 경로 구분자입니다. POSIX에서는 `/`, 윈도우에서는 `\`입니다. `split` 메서드를 사용해 상대 경로를 구분자로 나누고, `category`와 `slugParts`로 분리합니다.
+- 블로그는 도커 컨테이너를 사용해 Vercel에 배포할 예정이므로, POSIX 구분자를 사용해 `join` 메서드로 `slugParts`를 합쳐 `slug`를 생성합니다.
+- MDX 파일은 모두 `./data/src/posts` 디렉토리에 보관되므로 `url`은 `/posts/[category]/[slug]` 형태로 생성합니다.
+
+### PostContent 추출하기
+
+`parsePostContent` 함수는 `gray-matter`를 사용해 front matter와 content를 추출합니다. MDX 파일을 작성할 때 상단에 yaml 형식으로 front matter를 작성해 두어야 합니다.
+
+```tsx
+// src/lib/post.ts
+// MDX 파일의 front matter와 content를 파싱
+const parsePostContent = async (postPath: string): Promise<Post> => {
+  const filePath = path.join(postPath, 'content.mdx');
+  const fileContent = await fs.readFile(filePath, 'utf-8');
+  const { data, content } = matter(fileContent);
+  return { ...data, content } as Post;
+};
+```
+
+- `path.join` 메서드를 사용해 `postPath`와 `content.mdx`를 합쳐 파일 경로를 생성합니다. 그리고 `fs.readFile` 메서드를 사용해 파일을 비동기적으로 읽어옵니다.
+- [`matter`](https://github.com/jonschlinkert/gray-matter?tab=readme-ov-file#matter) 함수는 `gray-matter` 패키지의 메서드로, 파일 내용을 파싱해 front matter와 content를 추출합니다. `data`는 front matter이고, `content`는 MDX 파일의 내용입니다.
+
+### 파싱된 결과를 확인
+
+`<PostBody>` 컴포넌트가 직접 `gray-matter`를 사용하지 않고 `parsePost` 함수의 결과값을 사용하도록 로직을 변경합니다.
+
+```tsx
+// src/compoents/post-detail/PostBody.tsx
+import { getPostPaths, parsePost } from '@/lib/post';
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import { mdxComponents } from '@/components/mdx';
+
+const PostBody = async () => {
+  const filePaths = await getPostPaths();
+  const filePath = filePaths[9];
+  const { title, content } = await parsePost(filePath);
+
+  return (
+    <div className="p-4">
+      <h1 className="text-4xl font-black pb-4">{title}</h1>
+      <MDXRemote source={content} components={mdxComponents} />
+    </div>
+  );
+};
+
+export default PostBody;
+```
+
+- 현재 작성중인 MDX 파일이 10번째 파일인 것으로 확인했기에 인덱스 9를 사용해 파일 경로를 반환받습니다.
+- parsePost는 MDX 파일의 프론트 매터와 본문, slug 등이 모두 담긴 객체를 반환하기 때문에, title과 content를 바로 반환받을 수 있습니다.
+- 교체 후에도 `localhost:3000`에 표시되는 내용이 달라지지 않은 것을 확인할 수 있습니다.
