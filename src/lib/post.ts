@@ -7,6 +7,44 @@ import matter from 'gray-matter';
 const BASE_PATH = './src/data/posts';
 const POSTS_PATH = path.join(process.cwd(), BASE_PATH);
 
+// order 프로퍼티 기준으로 정렬된 포스트 리스트를 반환
+export const getSortedPosts = async (category?: string): Promise<Post[]> => {
+  const postList = await getPostList(category);
+  return sortPostsByOrder(postList);
+};
+
+// Post[] 배열을 order 프로퍼티 기준으로 정렬하는 함수
+const sortPostsByOrder = (postList: Post[]): Post[] => {
+  return postList.sort((a, b) => {
+    for (let i = 0; i < Math.max(a.order.length, b.order.length); i++) {
+      const aVal = a.order[i] || 0;
+      const bVal = b.order[i] || 0;
+      if (aVal !== bVal) {
+        return aVal - bVal;
+      }
+    }
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+};
+
+// date 프로퍼티 기준으로 정렬된 포스트 리스트를 반환
+export const getRecentPosts = async (category?: string): Promise<Post[]> => {
+  const postList = await getPostList(category);
+  return sortPostsByDate(postList);
+};
+
+// Post[] 배열을 date 프로퍼티 기준으로 정렬하는 함수
+const sortPostsByDate = (postList: Post[]): Post[] => {
+  return postList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
+// 모든 MDX 파일을 파싱한 리스트를 배열로 반환
+export const getPostList = async (category?: string): Promise<Post[]> => {
+  const postPaths = await getPostPaths(category);
+  const postList = await Promise.all(postPaths.map(parsePost));
+  return postList;
+};
+
 // 모든 MDX 파일에 대한 경로를 배열로 반환
 export const getPostPaths = async (category?: string): Promise<string[]> => {
   const searchPath = category ? path.join(POSTS_PATH, category) : POSTS_PATH;

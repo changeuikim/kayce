@@ -1,11 +1,10 @@
-import { getPostPaths, parsePost } from '@/lib/post';
+import { getSortedPosts } from '@/lib/post';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { mdxComponents } from '@/components/mdx';
 
 const PostBody = async () => {
-  const filePaths = await getPostPaths();
-  const filePath = filePaths[9];
-  const { title, content } = await parsePost(filePath);
+  const sortedPostList = await getSortedPosts();
+  const { title, content } = sortedPostList[9];
 
   return (
     <div className="p-4">
