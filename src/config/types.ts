@@ -14,3 +14,9 @@ export interface Post extends PostMatter {
   slug: string;
   url: string;
 }
+
+export interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  basePath: string;
+}
