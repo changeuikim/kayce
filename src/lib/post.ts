@@ -7,6 +7,25 @@ import matter from 'gray-matter';
 const BASE_PATH = './src/data/posts';
 const POSTS_PATH = path.join(process.cwd(), BASE_PATH);
 
+// 정렬과 페이지네이션이 적용된 포스트 리스트를 반환
+export const getPaginatedPostList = async (
+  page: number,
+  postsPerPage: number = 5
+): Promise<{ posts: Post[]; totalPages: number }> => {
+  const allPosts = await getSortedPosts();
+  const totalPages = Math.ceil(allPosts.length / postsPerPage);
+  const startIdx = (page - 1) * postsPerPage;
+  const endIdx = startIdx + postsPerPage;
+  const posts = allPosts.slice(startIdx, endIdx);
+  return { posts, totalPages };
+};
+
+// 최신 포스트 N개를 반환
+export const getRecentPostList = async (count: number = 5, category?: string): Promise<Post[]> => {
+  const postList = await getRecentPosts(category);
+  return postList.slice(0, count);
+};
+
 // order 프로퍼티 기준으로 정렬된 포스트 리스트를 반환
 export const getSortedPosts = async (category?: string): Promise<Post[]> => {
   const postList = await getPostList(category);
@@ -63,10 +82,11 @@ export const parsePost = async (postPath: string): Promise<Post> => {
 };
 
 // MDX 파일의 meta data를 파싱
-const parsePostMetaData = (postPath: string): Post => {
+export const parsePostMetaData = (postPath: string): Post => {
   const relativePath = path.relative(POSTS_PATH, postPath);
-  const [category, ...slugParts] = relativePath.split(path.sep);
-  const slug = slugParts.join('/');
+  const parts = relativePath.split(path.sep);
+  const category = parts[0];
+  const slug = parts.slice(1).join('/');
   const url = `/posts/${category}/${slug}`;
 
   return { category, slug, url } as Post;
