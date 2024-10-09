@@ -1,11 +1,7 @@
-import PostBody from '@/components/post/PostBody';
+import HomePage from '@/app/page';
 
 const Category = () => {
-  return (
-    <main>
-      <PostBody />
-    </main>
-  );
+  return <HomePage />;
 };
 
 export default Category;

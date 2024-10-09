@@ -7,6 +7,7 @@ import matter from 'gray-matter';
 const BASE_PATH = './src/data/posts';
 const POSTS_PATH = path.join(process.cwd(), BASE_PATH);
 
+// (1) 포스트 리스트 로직
 // 정렬과 페이지네이션이 적용된 포스트 리스트를 반환
 export const getPaginatedPostList = async (
   page: number,
@@ -74,6 +75,14 @@ export const getPostPaths = async (category?: string): Promise<string[]> => {
     .map((file) => file.parentPath);
 };
 
+// (2) 포스트 상세 로직
+// category와 slug를 이용해 특정 포스트를 반환
+export const getPostBySlug = async (category: string, slug: string): Promise<Post | null> => {
+  const postPath = path.join(POSTS_PATH, category, slug);
+  const post = await parsePost(postPath);
+  return post;
+};
+
 // MDX 파일을 파싱
 export const parsePost = async (postPath: string): Promise<Post> => {
   const metaData = parsePostMetaData(postPath);
@@ -98,11 +107,4 @@ const parsePostContent = async (postPath: string): Promise<Post> => {
   const fileContent = await fs.readFile(filePath, 'utf-8');
   const { data, content } = matter(fileContent);
   return { ...data, content } as Post;
-};
-
-// category와 slug를 이용해 특정 포스트를 반환
-export const getPostBySlug = async (category: string, slug: string): Promise<Post | null> => {
-  const postPath = path.join(POSTS_PATH, category, slug);
-  const post = await parsePost(postPath);
-  return post;
 };

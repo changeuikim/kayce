@@ -6,9 +6,8 @@ type Props = {
 };
 
 const PostPage = async ({ params: { slug } }: Props) => {
-  const category = slug[0];
-  const fullSlug = slug.slice(1).join('/');
-  const post = await getPostBySlug(category, fullSlug);
+  const [category, ...restSlug] = slug;
+  const post = await getPostBySlug(category, restSlug.join('/'));
 
   if (!post) {
     return <div>포스트를 찾을 수 없습니다.</div>;
