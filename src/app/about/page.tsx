@@ -1,4 +1,4 @@
-import PostBody from '@/components/post-detail/PostBody';
+import PostBody from '@/components/post/PostBody';
 
 const About = () => {
   return (
