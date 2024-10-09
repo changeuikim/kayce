@@ -99,3 +99,10 @@ const parsePostContent = async (postPath: string): Promise<Post> => {
   const { data, content } = matter(fileContent);
   return { ...data, content } as Post;
 };
+
+// category와 slug를 이용해 특정 포스트를 반환
+export const getPostBySlug = async (category: string, slug: string): Promise<Post | null> => {
+  const postPath = path.join(POSTS_PATH, category, slug);
+  const post = await parsePost(postPath);
+  return post;
+};
