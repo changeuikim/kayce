@@ -1,27 +1,21 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-import { MDXRemote } from 'next-mdx-remote/rsc';
-import matter from 'gray-matter';
-import { mdxComponents } from '@/components/mdx';
+import Link from '@/components/common/Link';
+import PostList from '@/components/post/PostList';
+import { getRecentPostList } from '@/lib/post';
 
-const Home = async () => {
-  const filePath = path.join(
-    process.cwd(),
-    'src',
-    'data',
-    'posts',
-    'nextjs-blog',
-    'header-and-footer.mdx'
-  );
-  const fileContents = await fs.readFile(filePath, 'utf-8');
-  const { data, content } = matter(fileContents);
+const HomePage = async () => {
+  const recentPosts = await getRecentPostList();
 
   return (
     <main className="p-4">
-      <h1 className="text-4xl font-black pb-4">{data.title}</h1>
-      <MDXRemote source={content} components={mdxComponents} />
+      <PostList title="최근 게시물" posts={recentPosts} />
+      <Link
+        href="/posts"
+        className="mt-8 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
+        모든 게시물 보기
+      </Link>
     </main>
   );
 };
 
-export default Home;
+export default HomePage;
