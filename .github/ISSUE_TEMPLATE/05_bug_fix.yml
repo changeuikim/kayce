@@ -1,0 +1,55 @@
+name: '🐛 버그 수정'
+description: '프로젝트 실행 중 발생한 버그를 수정합니다.'
+title: '[fix] '
+labels:
+  - 'bug'
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 버그 설명
+
+  - type: input
+    id: bug_summary
+    attributes:
+      label: 버그 요약
+      description: 버그에 대한 간략한 설명을 입력하세요.
+      placeholder: 예) 특정 포스트에서 렌더링 이슈가 발생합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: 재현 방법
+      description: 버그를 재현하는 방법을 단계별로 설명하세요.
+      placeholder: |
+        1. 특정 포스트 페이지로 이동합니다.
+        2. 우측 하단에 Error 토스트가 표시됩니다.
+        3. 클릭 시 <p> 태그가 중첩되었다고 표시됩니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: 기대 동작
+      description: 기대하는 동작을 설명하세요.
+      placeholder: 예) 페이지가 정상적으로 렌더링됩니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 스크린샷
+      description: 오류를 보여주는 스크린샷을 추가해주세요.
+      placeholder: 스크린샷을 여기에 추가하세요.
+
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: 추가 정보
+      description: 추가로 필요한 정보가 있다면 적어주세요.
+      placeholder: 예) 새로고침을 계속하면 안뜨는 경우도 있습니다.
