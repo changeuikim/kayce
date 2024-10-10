@@ -1,0 +1,61 @@
+name: '🛠️코드 리팩토링'
+description: '코드의 가독성, 유지보수성을 향상시키기 위한 작업을 수행합니다.'
+title: '[Refactor] '
+labels:
+  - 'refactor'
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 리팩토링 설명
+
+  - type: input
+    id: refactor_area
+    attributes:
+      label: 리팩토링 영역
+      description: 리팩토링할 코드의 영역을 입력하세요.
+      placeholder: 예) App Router 관련 코드
+    validations:
+      required: true
+
+  - type: textarea
+    id: refactor_description
+    attributes:
+      label: 리팩토링 설명
+      description: 리팩토링할 부분에 대한 설명을 입력하세요.
+      placeholder: 예) Dynamic Route Segment의 구조를 변경합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason_for_refactor
+    attributes:
+      label: 이유
+      description: 리팩토링이 필요한 이유를 설명하세요.
+      placeholder: 예) 세그먼트 그루핑으로 라우팅 관리의 가시성을 높입니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation_details
+    attributes:
+      label: 구현 세부 사항
+      description: 리팩토링의 세부 사항을 작성해주세요.
+      placeholder: |
+        예) /posts/[...slug]를 /posts/(main)/[...slug]로 변경합니다.
+
+  - type: textarea
+    id: test_instructions
+    attributes:
+      label: 테스트 방법
+      description: 리팩토링 후 테스트 방법을 작성해주세요.
+      placeholder: |
+        예) 페이지 접속이 정상적이고 URL에 main이 표시되지 않는 것을 확인합니다.
+
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: 추가 정보
+      description: 추가로 필요한 정보가 있다면 적어주세요.
+      placeholder: 예) 구조가 복잡해지면 라우팅 로직의 분리도 고려합니다.
