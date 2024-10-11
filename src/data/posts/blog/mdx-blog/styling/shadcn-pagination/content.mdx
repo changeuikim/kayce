@@ -1,0 +1,352 @@
+---
+title: 'MDX 블로그 스타일링 (1) - shadcn/ui의 Pagination과 Button'
+summary: 'UI/UX 개선을 위해 shadcn/ui를 사용해 페이지네이션 컴포넌트를 교체합니다.'
+date: '2024-10-11 12:02'
+lastModified: '2024-10-11 12:02'
+author: 'kayce'
+tags: ['mdx-blog', 'styling', 'shadcn-ui', 'pagination']
+order: [01, 02, 02, 01]
+---
+
+## shadcn/ui 초기화
+
+[shadcn/ui](https://ui.shadcn.com/docs)는 [`Radix UI`](https://www.radix-ui.com/)와 [`Tailwind CSS`](https://tailwindcss.com/)를 기반으로 재사용가능한 컴포넌트를 제공하는 라이브러리입니다. MIT 라이센스가 적용되기 때문에 사용에 있어 부담이 없는 편입니다. 가장 최신 버전은 2.1.0으로 꽤나 안정화 되어있고, 깃허브도 꾸준히 관리되고 있습니다.
+
+문서도 체계적으로 잘 정리되어있고, 유용한 컴포넌트도 많이 제공되고 있습니다. 컴포넌트의 설치에 앞서 shadcn의 초기화가 필요합니다.
+
+```bash
+npx shadcn@latest init
+
+Which style would you like to use? › Default
+Which color would you like to use as base color? › Slate
+Do you want to use CSS variables for colors? › yes
+```
+
+- 초기화 절차는 간단한 편입니다.
+
+초기화가 완료되면 프로젝트에 몇 가지 변화가 생깁니다. tailwind.config.ts 파일과 globals.css 파일에 shadcn과 관련된 설정이 추가됩니다. 그리고 components.json 파일과 utils.ts 파일이 생성됩니다.
+
+```json
+"dependencies": {
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.451.0",
+    "tailwind-merge": "^2.5.3",
+    "tailwindcss-animate": "^1.0.7"
+}
+```
+
+- class-variance-authority: 여러가지 클래스 변형을 정의하고, 상황에 맞게 클래스를 선택하여 조합하는걸 도와줍니다.
+- clsx: CSS 클래스를 조건에 따라 동적으로 조합할 수 있게 합니다.
+- lucide-react: 반응형 SVG 아이콘 컬렉션을 제공합니다.
+- tailwind-merge: 중복되는 Tailwind CSS 클래스를 병합합니다.
+- tailwindcss-animate: Tailwind CSS를 확장하여 애니메이션 유틸리티 클래스를 제공합니다.
+
+```tsx
+// ./components.json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "src/app/globals.css",
+    "baseColor": "slate",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  }
+}
+
+// src/lib/utils.ts
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+```
+
+- components.json 파일은 shadcn/ui의 설정 파일입니다. 여기서는 style, rsc, tsx, tailwind, aliases 등의 설정이 있습니다.
+- utils.ts 파일은 clsx와 tailwind-merge를 사용하여 CSS 클래스를 조합하는 함수를 정의합니다.
+
+## Pagination 컴포넌트 설치
+
+shadcn/ui의 Pagination 컴포넌트는 페이지네이션을 구현할 때 사용할 수 있는 컴포넌트입니다. 페이지 네비게이션과 이전 페이지, 다음 페이지의 링크를 제공합니다.
+
+```bash
+npx shadcn@latest add pagination
+
+✔ Checking registry.
+✔ Installing dependencies.
+✔ Created 2 files:
+  - src/components/ui/pagination.tsx
+  - src/components/ui/button.tsx
+```
+
+- 컴포넌트 설치는 간단합니다. pagination 컴포넌트와 button 컴포넌트가 생성됩니다.
+- `package.json` 파일에는 `"@radix-ui/react-slot": "^1.1.0**",**`가 추가됩니다.
+
+```tsx
+// src/components/ui/button.tsx
+import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+
+import { cn } from '@/lib/utils';
+
+const buttonVariants = cva();
+
+// 중략
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  }
+);
+Button.displayName = 'Button';
+
+export { Button, buttonVariants };
+```
+
+- Button 컴포넌트는 Tailwind CSS가 적용된 타입스크립트로 작성되어 있습니다.
+- CSS는 cva(class-variance-authority)를 사용하여 정의되어 있어서 필요하다면 커스터마이징이 가능합니다.
+- 재사용가능한 컴포넌트를 지향하기 때문에 forwardRef를 사용하여 ref를 전달받아 사용할 수 있도록 구현되어 있습니다.
+- 버튼이 필요한 위치에 Button 컴포넌트를 import해서 사용하면 됩니다.
+
+```tsx
+// src/components/ui/pagination.tsx
+import * as React from 'react';
+import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+import { ButtonProps, buttonVariants } from '@/components/ui/button';
+
+// 중략
+
+export {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+};
+```
+
+- Pagination 컴포넌트는 더 많은 세부 컴포넌트로 구성되어 있습니다.
+- 반응형 SVG 아이콘을 사용하고 있으며, Button 컴포넌트를 import해서 사용중입니다.
+
+```tsx
+<Pagination>
+  <PaginationContent>
+    <PaginationItem>
+      <PaginationPrevious href="#" />
+    </PaginationItem>
+    <PaginationItem>
+      <PaginationLink href="#">1</PaginationLink>
+    </PaginationItem>
+    <PaginationItem>
+      <PaginationEllipsis />
+    </PaginationItem>
+    <PaginationItem>
+      <PaginationNext href="#" />
+    </PaginationItem>
+  </PaginationContent>
+</Pagination>
+```
+
+- shadcn/ui의 공식 문서에서는 Pagination 컴포넌트의 사용례로 위와 같이 예시를 보여줍니다.
+
+## PostPagination 컴포넌트 구현
+
+기존에 구현한 동적 라우트 세그먼트의 코드는 특별한 변경없이 그대로 유지합니다.
+
+```tsx
+// src/app/posts/(pagination)/[page].tsx
+import { getPaginatedPostList } from '@/lib/post';
+import PostList from '@/components/post/PostList';
+import PostPagination from '@/components/post/PostPagination';
+
+type Props = {
+  params: { page: string };
+};
+
+const PostListPage = async ({ params }: Props) => {
+  const page = parseInt(params.page, 10) || 1;
+  const { posts, totalPages } = await getPaginatedPostList(page);
+
+  return (
+    <div className="p-4">
+      <PostList title="전체 포스트" posts={posts} />
+      <PostPagination currentPage={page} totalPages={totalPages} basePath="/posts" />
+    </div>
+  );
+};
+
+export default PostListPage;
+
+export async function generateStaticParams() {
+  const { totalPages } = await getPaginatedPostList(1);
+
+  return Array.from({ length: totalPages }, (_, i) => ({
+    page: (i + 1).toString(),
+  }));
+}
+
+// src/lib/post.ts
+// 정렬과 페이지네이션이 적용된 포스트 리스트를 반환
+export const getPaginatedPostList = async (
+  page: number,
+  postsPerPage: number = 5
+): Promise<{ posts: Post[]; totalPages: number }> => {
+  const allPosts = await getSortedPosts();
+  const totalPages = Math.ceil(allPosts.length / postsPerPage);
+  const startIdx = (page - 1) * postsPerPage;
+  const endIdx = startIdx + postsPerPage;
+  const posts = allPosts.slice(startIdx, endIdx);
+  return { posts, totalPages };
+};
+```
+
+- 빌드 시점에 Next는 `generateStaticParams` 함수를 실행하고, `totalPages`를 기반으로 정적 페이지를 생성합니다.
+- 각 페이지별로 `PostPagination` 컴포넌트에는 현재 페이지와 전체 페이지 수, 기본 경로를 전달합니다.
+
+```tsx
+// src/components/post/PostPagination.tsx
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  basePath: string;
+}
+
+const PostPagination = ({ currentPage, totalPages, basePath }: PaginationProps) => {
+  return(
+    // 페이지네이션 구현
+
+  );
+};
+
+export default PostPagination;
+```
+
+- shadcn/ui의 Pagination 컴포넌트의 거의 모든 세부 컴포넌트를 다 사용합니다.
+- prop으로 전달받은 현재 페이지, 전체 페이지, 기본 경로를 활용하여 페이지네이션 별 각 페이지를 렌더링해서 반환합니다.
+
+```tsx
+return (
+  <Pagination>
+    <PaginationContent>
+      {currentPage > 1 && (
+        <PaginationItem>
+          <PaginationPrevious href={`${basePath}/${currentPage - 1}`} />
+        </PaginationItem>
+      )}
+      {renderPaginationItems()}
+      {currentPage < totalPages && (
+        <PaginationItem>
+          <PaginationNext href={`${basePath}/${currentPage + 1}`} />
+        </PaginationItem>
+      )}
+    </PaginationContent>
+  </Pagination>
+);
+```
+
+- 현재 페이지가 1보다 크면 이전 페이지로 이동하는 링크를 렌더링합니다.
+- 현재 페이지가 전체 페이지보다 작으면 다음 페이지로 이동하는 링크를 렌더링합니다.
+- `PaginationPrevious` 컴포넌트는 내부적으로 `a` 태그를 가지고 있기 때문에, `href` 속성을 사용하여 경로를 전달합니다. 동적 라우트 세그먼트를 사용하기 때문에 `basePath?page=1`의 쿼리 스트링이 아닌 `basePath/1` 형태로 경로를 전달합니다.
+
+```tsx
+const renderPaginationItems = () => {
+  const items = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink href={`${basePath}/${i}`} isActive={i === currentPage}>
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+  }
+  return items;
+};
+```
+
+- 페이지네이션의 중간에는 현재 페이지를 기준으로 좌우로 1씩 이동할 수 있는 페이지를 렌더링합니다.
+- 현재 페이지의 좌우로 2칸 떨어진 페이지는 생략 부호를 렌더링합니다.
+
+## 링크 버튼 컴포넌트 구현
+
+메인 페이지에서 `모든 게시물 보기` 버튼을 누르면 `/posts`로 이동하도록 구현되어 있습니다. 이 버튼을 shadcn/ui의 Button 컴포넌트로 교체합니다. 버튼 자체에는 링크 기능이 없기 때문에 커스텀 링크 컴포넌트와 결합해 링크 버튼 컴포넌트를 새로 정의했습니다.
+
+```tsx
+// src/components/common/LinkButton.tsx
+import React from 'react';
+import Link from '@/components/common/Link';
+import { Button, ButtonProps } from '@/components/ui/button';
+
+interface ButtonLinkProps extends ButtonProps {
+  href: string;
+}
+
+const LinkButton: React.FC<ButtonLinkProps> = ({ href, children, ...props }) => {
+  return (
+    <Button asChild {...props}>
+      <Link href={href}>{children}</Link>
+    </Button>
+  );
+};
+
+export default LinkButton;
+```
+
+- [asChild prop](https://www.jacobparis.com/content/react-as-child)을 사용하여 Button 컴포넌트의 자식으로 Link 컴포넌트를 전달합니다. 이는 Radix UI의 Slot 컴포넌트를 사용하여 구현되었습니다. shadcn/ui는 radix-ui를 기반으로 만들어졌기 때문에 react-as-child 패턴을 사용할 수 있습니다.
+- 일반적으로는 Button 컴포넌트가 렌더링되고, 그 안에 Link 컴포넌트가 렌더링됩니다. 버튼 안에 링크가 있기 때문에 의도하는 바와는 조금 다른 결과입니다.
+- asChild가 true이면 Button 컴포넌트는 렌더링되지 않고, 스타일과 props가 Link 컴포넌트에 직접 적용됩니다. 버튼처럼 보이면서 링크로 작동하는 컴포넌트가 렌더링 되기 때문에 보다 의도한 바에 가까운 결과를 얻을 수 있습니다.
+
+```tsx
+const Slot = ({ children, ...props }) => {
+  const child = React.Children.only(children);
+  return React.cloneElement(child, { ...props, ...child.props });
+};
+```
+
+- Slot 컴포넌트는 자식 컴포넌트를 받아서 하나의 자식 컴포넌트만 선택합니다.
+- cloneElement 함수를 사용하여 Button의 props와 Link의 props를 합쳐서 하나의 컴포넌트로 만듭니다.
+- asChild가 true이면 내부적으로 이러한 과정을 통해 Button의 스타일과 동작을 가진 Link가 렌더링됩니다.
