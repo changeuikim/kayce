@@ -1,6 +1,6 @@
 import { getPaginatedPostList } from '@/lib/post';
-import Pagination from '@/components/common/Pagination';
 import PostList from '@/components/post/PostList';
+import PostPagination from '@/components/post/PostPagination';
 
 type Props = {
   params: { page: string };
@@ -13,7 +13,7 @@ const PostListPage = async ({ params }: Props) => {
   return (
     <div className="p-4">
       <PostList title="전체 포스트" posts={posts} />
-      <Pagination currentPage={page} totalPages={totalPages} basePath="/posts" />
+      <PostPagination currentPage={page} totalPages={totalPages} basePath="/posts" />
     </div>
   );
 };

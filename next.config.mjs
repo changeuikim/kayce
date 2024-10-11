@@ -1,15 +1,21 @@
 import createMDX from '@next/mdx';
+import remarkGfm from 'remark-gfm';
+import rehypeSlug from 'rehype-slug';
+import rehypePrettyCode from 'rehype-pretty-code';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Configure `pageExtensions` to include markdown and MDX files
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
-
-  // Optionally, add any other Next.js config below
+  experimental: {
+    mdxRs: true,
+  },
 };
 
 const withMDX = createMDX({
-  // Add markdown plugins here, as desired
+  options: {
+    remarkPlugins: [remarkGfm],
+    rehypePlugins: [rehypeSlug, [rehypePrettyCode, { theme: 'github-dark' }]],
+  },
 });
 
 // Merge MDX config with Next.js config
