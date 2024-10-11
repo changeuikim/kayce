@@ -12,6 +12,28 @@ export const mdxComponents: MDXComponents = {
   ul: (props) => <ul className="list-disc pl-6 pb-4" {...props} />,
   ol: (props) => <ol className="list-decimal pl-6 pb-4" {...props} />,
   hr: (props) => <hr className="my-4" {...props} />,
+  pre: (props) => (
+    <pre
+      className="rounded-md p-4 overflow-x-auto my-4 whitespace-pre-wrap bg-gray-100"
+      {...props}
+    />
+  ),
+  code: (props) => {
+    const isInline = typeof props.children === 'string';
+
+    if (isInline) {
+      // 인라인 코드의 경우
+      return (
+        <code
+          className="bg-red-50 text-black font-semibold rounded px-1.5 py-0.5 text-lg"
+          {...props}
+        />
+      );
+    } else {
+      // 코드 블록의 경우
+      return <code className="text-xl font-mono" {...props} />;
+    }
+  },
   blockquote: (props) => (
     <blockquote
       className="border-l-4 border-rose-700 bg-rose-100 p-4 my-4 rounded-r flex items-center"
@@ -20,12 +42,5 @@ export const mdxComponents: MDXComponents = {
       <p className="m-0">{props.children}</p>
     </blockquote>
   ),
-  pre: (props) => <pre className="bg-amber-50 rounded-md p-4 overflow-x-auto my-4" {...props} />,
-  code: ({ className, ...props }) => {
-    const match = /language-(\w+)/.exec(className || '');
-    return (
-      <code className={`${match ? `language-${match[1]}` : ''} text-sm font-mono`} {...props} />
-    );
-  },
   a: (props) => <a className="hover:underline font-semibold" {...props} />,
 };
