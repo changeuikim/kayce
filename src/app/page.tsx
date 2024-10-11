@@ -1,6 +1,6 @@
-import Link from '@/components/common/Link';
 import PostList from '@/components/post/PostList';
 import { getRecentPostList } from '@/lib/post';
+import ButtonLink from '@/components/common/ButtonLink';
 
 const HomePage = async () => {
   const recentPosts = await getRecentPostList();
@@ -8,12 +8,9 @@ const HomePage = async () => {
   return (
     <main className="p-4">
       <PostList title="최근 게시물" posts={recentPosts} />
-      <Link
-        href="/posts"
-        className="mt-8 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-      >
+      <ButtonLink href="/posts" className="mt-8" variant="default">
         모든 게시물 보기
-      </Link>
+      </ButtonLink>
     </main>
   );
 };

@@ -2,9 +2,9 @@
 title: 'MDX 블로그 설정하기 (8) - 마무리'
 summary: 'MDX를 사용한 정적 블로그를 만들기 위한 초기 설정을 여기서 마무리합니다.'
 date: '2024-10-10 22:07'
-lastModified: '2024-10-11 08:18'
+lastModified: '2024-10-11 10:18'
 author: 'kayce'
-tags: ['mdx-blog', 'set-up', 'closure']
+tags: ['mdx-blog', 'set-up', 'mdx-plugins', 'closure']
 order: [01, 02, 01, 08]
 ---
 
@@ -24,8 +24,141 @@ order: [01, 02, 01, 08]
 
 디렉토리 구조를 잡고 MDX 파싱 로직을 세우면서 Next.js 뿐만 아니라 React 그 자체와 JavaScript 문법에 대해서도 다시 공부해봐야겠다는 생각이 들었습니다. React 공식 문서에서도 Next.js 를 사용한 실습을 권장하고는 있지만, 여전히 Vite나 CRA도 많이 사용하고 있습니다. 순수 React는 어땠는지를 되짚어보고, ES6+ 문법도 다시 정리를 해 볼 생각입니다.
 
-## 마무리하며
+## 코딩 테스트
 
 블로그에 필요한 자바스크립트 로직을 짜면서 프로그래밍 언어별로 코딩 테스트 문제를 좀 풀어봐야겠다는 생각이 들었습니다. 지금이 한창 코딩 테스트 시즌이라 거의 매주 파이썬을 사용하고 있는데, 확실히 파이썬은 매력적인 언어입니다. 수도 코드에 가까운 접근으로도 기능 구현이 가능하고, 직관적으로 사용할 수 있는 라이브러리도 풍부합니다. 그래도 메인 언어가 Java이고 서브 언어가 JavaScript인 백엔드 개발자로서, 두 언어를 사용해서 어느 정도의 문제는 풀 수 있어야 하지 않을까? 복잡한 알고리즘 구현보다는 각 언어별 특성과 차이에 초점을 맞춰 쉬운 문제부터 풀어볼 생각입니다.
+
+지금은 코드 블럭의 가시성이 좋지 않기 때문에 MDX 플러그인 몇 개를 더 설치하겠습니다.
+
+```bash
+yarn add remark-gfm rehype-slug rehype-pretty-code shiki
+```
+
+- `remark-gfm` : GFM(GitHub Flavored Markdown)을 지원합니다.
+- `rehype-slug` : 헤딩에 자동으로 ID를 추가하여 링크 가능한 헤더를 만듭니다.
+- `rehype-pretty-code` : 코드 블럭에 구문 강조를 적용합니다.
+- `shiki` : rehype에서 필요로 하는 의존성 라이브러리입니다.
+
+```js
+// ./next.config.mjs
+import createMDX from '@next/mdx';
+import remarkGfm from 'remark-gfm';
+import rehypeSlug from 'rehype-slug';
+import rehypePrettyCode from 'rehype-pretty-code';
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+  experimental: {
+    mdxRs: true,
+  },
+};
+
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: [remarkGfm],
+    rehypePlugins: [rehypeSlug, [rehypePrettyCode, { theme: 'github-dark' }]],
+  },
+});
+
+// Merge MDX config with Next.js config
+export default withMDX(nextConfig);
+```
+
+- Next.js 설정파일에 MDX 플러그인을 추가합니다.
+
+```tsx
+// src/components/post/PostBody.tsx
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import { mdxComponents } from '@/components/mdx';
+import { Post } from '@/config/types';
+import remarkGfm from 'remark-gfm';
+import rehypeSlug from 'rehype-slug';
+import rehypePrettyCode from 'rehype-pretty-code';
+
+type PostBodyProps = {
+  post: Post;
+};
+
+const PostBody = ({ post }: PostBodyProps) => {
+  return (
+    <article className="p-4">
+      <h1 className="text-4xl font-black pb-4">{post.title}</h1>
+      <MDXRemote
+        source={post.content}
+        components={mdxComponents}
+        options={{
+          mdxOptions: {
+            remarkPlugins: [remarkGfm],
+            rehypePlugins: [rehypeSlug, [rehypePrettyCode, { theme: 'github-dark' }]],
+          },
+        }}
+      />
+    </article>
+  );
+};
+
+export default PostBody;
+```
+
+- MDX 파싱 로직을 수행하는 MDXRemote 컴포넌트의 옵션에 플러그인 관련 설정을 추가합니다.
+
+```tsx
+// src/components/mdx/index.tsx
+import type { MDXComponents } from 'mdx/types';
+
+export const mdxComponents: MDXComponents = {
+  h1: (props) => <h1 className="text-4xl font-black pb-4" {...props} />,
+  h2: (props) => <h2 className="text-3xl font-bold pb-4" {...props} />,
+  h3: (props) => <h3 className="text-2xl font-semibold pb-4 " {...props} />,
+  h4: (props) => <h4 className="text-xl font-medium pb-4" {...props} />,
+  h5: (props) => <h5 className="text-lg font-normal pb-4" {...props} />,
+  h6: (props) => <h6 className="text-base font-light pb-4" {...props} />,
+  p: (props) => <p className="text-lg mb-4" {...props} />,
+  li: (props) => <li className="pb-1" {...props} />,
+  ul: (props) => <ul className="list-disc pl-6 pb-4" {...props} />,
+  ol: (props) => <ol className="list-decimal pl-6 pb-4" {...props} />,
+  hr: (props) => <hr className="my-4" {...props} />,
+  pre: (props) => (
+    <pre
+      className="rounded-md p-4 overflow-x-auto my-4 whitespace-pre-wrap bg-gray-100"
+      {...props}
+    />
+  ),
+  code: (props) => {
+    const isInline = typeof props.children === 'string';
+
+    if (isInline) {
+      // 인라인 코드의 경우
+      return (
+        <code
+          className="bg-red-50 text-black font-semibold rounded px-1.5 py-0.5 text-lg"
+          {...props}
+        />
+      );
+    } else {
+      // 코드 블록의 경우
+      return <code className="text-xl font-mono" {...props} />;
+    }
+  },
+  blockquote: (props) => (
+    <blockquote
+      className="border-l-4 border-rose-700 bg-rose-100 p-4 my-4 rounded-r flex items-center"
+      {...props}
+    >
+      <p className="m-0">{props.children}</p>
+    </blockquote>
+  ),
+  a: (props) => <a className="hover:underline font-semibold" {...props} />,
+};
+```
+
+- MDX 문서의 서식을 변경하는 MDXCompoent도 추가된 라이브러리와 어울릴 수 있도록 CSS 조정을 합니다.
+- `pre` 태그는 코드 블럭을 감싸는 역할을 합니다. 자식으로 `code` 태그를 가집니다. Github의 Dark 테마에 어울리게 스타일링을 조정하고, 긴 줄이 자동으로 줄바꿈되도록 했습니다.
+- `code` 태그는 백틱 3개로 만드는 코드 블럭과 백틱 1개로 만드는 인라인 코드 모두에 영향을 주는 태그입니다.
+- 코드블럭은 폰트 크기를 키워서 가독성을 높였습니다.
+- 인라인 코드는 옅은 빨간색 배경에 굵은 글씨체로 가독성이 좋게 표현했습니다.
+
+## 마무리하며
 
 아직 블로그에 구현해야할 기능이 많습니다. 다크모드, 댓글, 카테고리, 태그, 검색 등등 해야할 것이 많습니다. [shadcn/ui](https://ui.shadcn.com/) 를 사용한 UI/UX 개선이나 [`Rehype`](https://rehype-pretty.pages.dev/)를 사용한 코드블럭 하이라이트를 우선적으로 해결할 생각입니다. 이번에 블로그를 개발하면서 김도형님의 [D5BL5G](https://d5br5.dev/blog) 블로그와 timlrx님의 [TailwindBlog](https://tailwind-nextjs-starter-blog.vercel.app/)를 보면서 많은 도움을 받았습니다. 이 자리를 빌어 감사드립니다.
