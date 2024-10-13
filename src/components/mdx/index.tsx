@@ -1,4 +1,8 @@
 import type { MDXComponents } from 'mdx/types';
+import CodeWrapper from '@/components/mdx/CodeWrapper';
+import dynamic from 'next/dynamic';
+
+const LanguageSelector = dynamic(() => import('@/components/mdx/LanguageSelector'), { ssr: false });
 
 export const mdxComponents: MDXComponents = {
   h1: (props) => <h1 className="text-4xl font-black pb-4" {...props} />,
@@ -11,12 +15,16 @@ export const mdxComponents: MDXComponents = {
   li: (props) => <li className="pb-1" {...props} />,
   ul: (props) => <ul className="list-disc pl-6 pb-4" {...props} />,
   ol: (props) => <ol className="list-decimal pl-6 pb-4" {...props} />,
+  LanguageSelector: LanguageSelector,
+  CodeWrapper: CodeWrapper,
   hr: (props) => <hr className="my-4" {...props} />,
   pre: (props) => (
-    <pre
-      className="rounded-md p-4 overflow-x-auto my-4 whitespace-pre-wrap bg-gray-100"
-      {...props}
-    />
+    <CodeWrapper>
+      <pre
+        className="rounded-md p-4 overflow-x-auto my-4 whitespace-pre-wrap bg-gray-100"
+        {...props}
+      />
+    </CodeWrapper>
   ),
   code: (props) => {
     const isInline = typeof props.children === 'string';
