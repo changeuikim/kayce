@@ -1,0 +1,34 @@
+name: '📝 포스트 작성'
+description: '특정 주제에 관련된 여러 개의 포스트를 작성합니다.'
+title: '[post] '
+labels:
+  - 'post'
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 주제 설명
+
+  - type: input
+    id: post_theme
+    attributes:
+      label: 포스트 주제
+      description: 주제에 대한 간략한 설명을 입력하세요.
+      placeholder: 예) 주말 코딩 테스트에 앞서 코테 집중 주간으로 포스트를 작성합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: post_plan
+    attributes:
+      label: 일정
+      description: 포스트 작성 계획을 설명하세요.
+      placeholder: |
+        - 목표 기간 : 2024년 10월 15일 ~ 2024년 10월 19일
+        - 플랫폼 : 프로그래머스
+        - 1차 목표 : 새롭게 생긴 0레벨 124개 문제 풀이
+        - 2차 목표 : 기존에 풀이한 1 ~ 3레벨 300여개 문제를 새로운 ID로 다시 풀이
+        - 3차 목표 : 19일 시험 전까지 페이퍼 한장에 주요 로직을 정리
+    validations:
+      required: false
