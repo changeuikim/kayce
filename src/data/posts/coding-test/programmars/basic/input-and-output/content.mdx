@@ -1,0 +1,204 @@
+---
+title: '[프로그래머스] 코딩 기초 트레이닝 (1) - 입력과 출력'
+summary: '각 언어 별로 표준입력과 표준출력을 처리하는 방식을 풀이합니다.'
+date: '2024-10-13 11:37'
+lastModified: '2024-10-14 22:29'
+author: 'kayce'
+tags: ['coding-test', 'programmars', 'input', 'output']
+order: [03, 02, 01, 01]
+---
+
+<LanguageSelector />
+
+### [Lv.0] [문자열 출력하기](https://school.programmers.co.kr/learn/courses/30/lessons/181952) - 181952
+
+```py
+str = input()
+print(str)
+```
+
+```js
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+let input = [];
+
+rl.on('line', function (line) {
+  input = [line];
+}).on('close', function () {
+  str = input[0];
+  console.log(str);
+});
+```
+
+```java
+import java.util.Scanner;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        String str = sc.next();
+        System.out.println(str);
+    }
+}
+```
+
+```cpp
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+int main(void) {
+    string str;
+    cin >> str;
+    cout << str;
+    return 0;
+}
+```
+
+각 언어별 기본 출력 방법을 물어보는 문제입니다. 난이도는 없는거나 다름없지만, 입력과 출력의 근본이 되는 문제입니다.
+
+- Python:
+  - `input()`으로 입력받은걸 `print()`로 출력합니다. 파이썬답게 직관적입니다.
+  - `print(input())`도 동일한 결과를 낼 수 있지만, 문제의 요구 사항에 `str`이 언급되고 있기 때문에 굳이 생략하지는 않았습니다.
+- JavaScript:
+  - readline 모듈을 사용하여 `line` 이벤트 리스너를 등록하고, `close` 이벤트 리스너의 콜백 함수에 로직을 전개해서 `console.log();`로 출력합니다.
+  - 파이썬대비 코드가 상당히 길지만, 가장 마지막의 console.log만 추가했습니다.
+- Java:
+  - Scanner 클래스를 사용하여 `next()` 메소드로 입력을 받고, `System.out.println();`으로 출력합니다.
+  - 저라면 BufferedReader를 사용할 것 같지만, 이 문제에서는 굳이 고쳐쓰지는 않았습니다.
+- C++:
+  - string 헤더를 include하고, `cin >>`으로 입력을 받고, `cout <<`으로 출력합니다.
+  - `cout << str << "\n";`도 결과는 같았습니다.
+
+### [Lv.0] [문자열 반복해서 출력하기](https://school.programmers.co.kr/learn/courses/30/lessons/181950?language=python3) - 181950
+
+```py
+str, n = input().strip().split(' ')
+print(str * int(n))
+
+```
+
+```js
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+let input = [];
+
+rl.on('line', function (line) {
+  input = line.split(' ');
+}).on('close', function () {
+  str = input[0];
+  n = Number(input[1]);
+  console.log(str.repeat(n));
+});
+```
+
+```java
+import java.util.Scanner;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        String str = sc.next();
+        int n = sc.nextInt();
+        System.out.println(str.repeat(n));
+    }
+}
+```
+
+```cpp
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+int main(void) {
+    string str;
+    int n;
+    cin >> str >> n;
+
+    while(n--) {
+        cout << str;
+    }
+    return 0;
+}
+```
+
+문제 이름 그대로 각 언어별로 문자열을 반복하는 방법을 아는지 물어보는 문제입니다. 모든 언어에는 루프가 있기 때문에 그 방식으로 풀어도 됩니다.
+
+- Python:
+  - `*` 연산자를 사용해서 문자열을 반복합니다. 파이썬은 [`문자열에 숫자를 곱하면`](https://docs.python.org/3.9/library/stdtypes.html#sequence-types-list-tuple-range) 문자열이 숫자만큼 반복됩니다.
+  - 대신 n이 문자열로 들어오기 때문에 연산 전에 int로 형변환을 해줘야 합니다.
+- JavaScript:
+  - [`String.prototype.repeat()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/repeat) 메소드를 사용해서 문자열을 반복합니다.
+- Java:
+  - [`String.repeat()`](<https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#repeat(int)>) 메소드를 사용해서 문자열을 반복합니다.
+- C++:
+  - `while` 루프를 사용해서 n이 0이 될 때까지 문자열을 출력합니다.
+  - `for` 루프를 사용해도 됩니다.
+
+### [Lv.0] [특수문자 출력하기](https://school.programmers.co.kr/learn/courses/30/lessons/181948?language=python3) - 181948
+
+```py
+print(r'!@#$%^&*(\'"<>?:;')
+```
+
+```js
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+rl.on('close', function () {
+  console.log(String.raw`!@#$%^&*(\'"<>?:;`);
+});
+```
+
+```java
+import java.util.Scanner;
+
+public class Solution {
+    public static void main(String[] args) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("!@#$%^&*(")
+            .append("\\")
+            .append("'")
+            .append("\"")
+            .append("<>?:;");
+
+        System.out.println(sb);
+    }
+}
+```
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+int main(void) {
+    cout << R"(!@#$%^&*(\'"<>?:;)";
+    return 0;
+}
+```
+
+프로그래밍 언어에서 일부 특수문자는 특별한 문법이나 의미를 가지고 있기 때문에 이스케이프 처리를 해야합니다. 이스케이프로 처리해도 되지만, 각 언어별로 raw string을 출력하는 방법을 안다면 더 간단하게 처리할 수 있습니다.
+
+- Python:
+  - 파이썬은 [`r` 접두사](https://docs.python.org/3.9/reference/lexical_analysis.html#string-and-bytes-literals)를 사용해서 raw string을 만들 수 있습니다.
+- JavaScript:
+  - 자바스크립트는 [`String.raw`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/raw)를 사용해서 raw string을 만들 수 있습니다.
+- Java:
+  - 자바 13부터 [`Text Blocks`](https://openjdk.java.net/jeps/355)라는 기능이 추가되어서 raw string을 만들 수 있습니다. 하지만 어떤 이유에서인지 플랫폼에서 막혀있는 것을 확인했기에 직접 이스케이프 처리를 했습니다.
+- C++:
+  - C++은 [`R` 접두사](https://en.cppreference.com/w/cpp/language/string_literal)를 사용해서 raw string을 만들 수 있습니다.
