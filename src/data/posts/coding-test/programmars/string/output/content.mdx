@@ -303,3 +303,83 @@ int main(void) {
     return 0;
 }
 ```
+
+문자열 안의 문자 처리에 대한 문제입니다. 프로그래밍 언어에 따라 Upper, Lower 관련된 함수가 다르기 때문에 ASCII 코드를 직접 이용해서 풀기도 합니다.
+
+- Python:
+  - 파이썬은 문자열 내 모든 문자의 case를 반전하는 [`str.swapcase()`](https://docs.python.org/3.9/library/stdtypes.html#str.swapcase) 메서드를 제공합니다.
+  - 리스트 컴프리헨션을 활용해 `''.join(c.lower() if c.isupper() else c.upper() for c in str)`로도 풀 수 있습니다.
+  - [`str.isupper()`](https://docs.python.org/3.9/library/stdtypes.html#str.isupper) 메서드를 사용해서 대문자인지 확인합니다.
+  - [`str.lower()`](https://docs.python.org/3.9/library/stdtypes.html#str.lower) 메서드를 사용해서 소문자로 바꿉니다.
+  - [`str.upper()`](https://docs.python.org/3.9/library/stdtypes.html#str.upper) 메서드를 사용해서 대문자로 바꿉니다.
+- JavaScript:
+  - [`스프레드 연산자`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax)를 사용해서 문자열을 문자 배열로 만듭니다. 그리고 `map()` 메소드를 사용해서 대문자면 소문자로, 소문자면 대문자로 바꿉니다.
+  - 자바스크립트에는 case를 확인하는 메서드가 없기 때문에, `char == char.toUpperCase()`로 대문자인지 확인합니다.
+  - [`String.prototype.toUpperCase()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toUpperCase) 메소드를 사용해서 대문자로 바꿉니다.
+  - [`String.prototype.toLowerCase()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/toLowerCase) 메소드를 사용해서 소문자로 바꿉니다.
+- Java:
+  - [`toCharArray()`](<https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/String.html#toCharArray()>) 메소드를 사용해서 문자열을 문자 배열로 만듭니다. 그리고 대문자면 소문자로, 소문자면 대문자로 바꿉니다.
+  - [`Character.isUpperCase()`](<https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Character.html#isUpperCase(char)>) 메소드를 사용해서 대문자인지 확인합니다.
+  - [`Character.toLowerCase()`](<https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Character.html#toLowerCase(char)>) 메소드를 사용해서 소문자로 바꿉니다.
+  - [`Character.toUpperCase()`](<https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Character.html#toUpperCase(char)>) 메소드를 사용해서 대문자로 바꿉니다.
+- C++:
+  - [`cctype`](https://en.cppreference.com/w/cpp/header/cctype) 헤더에 있는 `isupper()`, `tolower()`, `toupper()` 함수를 사용해서 대문자인지 확인하고, 대문자면 소문자로, 소문자면 대문자로 바꿉니다.
+  - [`const string&`](https://en.cppreference.com/w/cpp/language/reference)를 사용해서 문자열을 참조로 받아서 복사를 줄입니다.
+
+### [Lv.0] [특수문자 출력하기](https://school.programmers.co.kr/learn/courses/30/lessons/181948?language=python3) - 181948
+
+```py
+print(r'!@#$%^&*(\'"<>?:;')
+```
+
+```js
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+rl.on('close', function () {
+  console.log(String.raw`!@#$%^&*(\'"<>?:;`);
+});
+```
+
+```java
+import java.util.Scanner;
+
+public class Solution {
+    public static void main(String[] args) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("!@#$%^&*(")
+            .append("\\")
+            .append("'")
+            .append("\"")
+            .append("<>?:;");
+
+        System.out.println(sb);
+    }
+}
+```
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+int main(void) {
+    cout << R"(!@#$%^&*(\'"<>?:;)";
+    return 0;
+}
+```
+
+프로그래밍 언어에서 일부 특수문자는 특별한 문법이나 의미를 가지고 있기 때문에 이스케이프 처리를 해야합니다. 이스케이프로 처리해도 되지만, 각 언어별로 raw string을 출력하는 방법을 안다면 더 간단하게 처리할 수 있습니다.
+
+- Python:
+  - 파이썬은 [`r` 접두사](https://docs.python.org/3.9/reference/lexical_analysis.html#string-and-bytes-literals)를 사용해서 raw string을 만들 수 있습니다.
+- JavaScript:
+  - 자바스크립트는 [`String.raw`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/raw)를 사용해서 raw string을 만들 수 있습니다.
+- Java:
+  - 자바 13부터 [`Text Blocks`](https://openjdk.java.net/jeps/355)라는 기능이 추가되어서 raw string을 만들 수 있습니다. 하지만 어떤 이유에서인지 플랫폼에서 막혀있는 것을 확인했기에 직접 이스케이프 처리를 했습니다.
+- C++:
+  - C++은 [`R` 접두사](https://en.cppreference.com/w/cpp/language/string_literal)를 사용해서 raw string을 만들 수 있습니다.
