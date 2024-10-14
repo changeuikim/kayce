@@ -20,7 +20,7 @@ const Footer = () => {
           <Link href="/">{siteMetadata.title}</Link>
         </div>
         <div className="mb-8 text-sm text-gray-500 dark:text-gray-400">
-          <Link href={siteMetadata.github}>KayceTechBlog</Link>
+          <Link href={siteMetadata.siteUrl}>KayceTechBlog</Link>
         </div>
       </div>
     </footer>

@@ -60,6 +60,16 @@ const config: Config = {
       },
     },
   },
+  safelist: [
+    'bg-blue-500',
+    'bg-yellow-500',
+    'bg-red-500',
+    'bg-green-500',
+    'text-white',
+    'text-gray-700',
+    'bg-gray-100',
+    'bg-gray-700',
+  ],
   plugins: [tainwindcssAnimate],
 };
 export default config;

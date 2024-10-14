@@ -13,6 +13,8 @@ const PostBody = ({ post }: PostBodyProps) => {
   return (
     <article className="p-4">
       <h1 className="text-4xl font-black pb-4">{post.title}</h1>
+      <br />
+      <br />
       <MDXRemote
         source={post.content}
         components={mdxComponents}
