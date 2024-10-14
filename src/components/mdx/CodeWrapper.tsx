@@ -14,8 +14,8 @@ const CodeWrapper: React.FC<CodeWrapperProps> = ({ children, title }) => {
   const languageName = languageObj ? languageObj.name : languageKey;
 
   return (
-    <div className={`code-wrapper mb-4`} data-language={languageKey} style={{ display: 'none' }}>
-      <h4 className="text-xl font-medium pb-2">{title || `${languageName} 문제풀이`}</h4>
+    <div className={`code-wrapper mb-4`} data-language={languageKey} style={{ display: 'block' }}>
+      <h4 className="text-xl font-medium pb-2">{title || `${languageName}`}</h4>
       {children}
     </div>
   );
