@@ -11,11 +11,11 @@ const CodeWrapper: React.FC<CodeWrapperProps> = ({ children, title }) => {
   const codeElement = preElement.props.children as React.ReactElement;
   const languageKey = codeElement.props['data-language'];
   const languageObj = languages.find((lang) => lang.language === languageKey);
-  const languageName = languageObj ? languageObj.name : languageKey;
+  const languageName = languageObj ? languageObj.name : null;
 
   return (
     <div className={`code-wrapper mb-4`} data-language={languageKey} style={{ display: 'block' }}>
-      <h4 className="text-xl font-medium pb-2">{title || `${languageName}`}</h4>
+      {languageName && <h4 className="text-xl font-medium pb-2">{title || `${languageName}`}</h4>}
       {children}
     </div>
   );
