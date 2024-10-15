@@ -1,5 +1,6 @@
 import { getPostBySlug, getPostPaths, parsePostMetaData } from '@/lib/post';
 import PostBody from '@/components/post/PostBody';
+import PostHeader from '@/components/post/PostHeader';
 
 type Props = {
   params: { slug: string[] };
@@ -13,7 +14,12 @@ const PostPage = async ({ params: { slug } }: Props) => {
     return <div>포스트를 찾을 수 없습니다.</div>;
   }
 
-  return <PostBody post={post} />;
+  return (
+    <article className="p-4">
+      <PostHeader post={post} />
+      <PostBody post={post} />
+    </article>
+  );
 };
 
 export default PostPage;
