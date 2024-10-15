@@ -1,0 +1,81 @@
+---
+title: '[프로그래머스] 코딩 기초 트레이닝 (4) - 홀짝과 연산자'
+summary: '각 언어 별로 홀짝 판별과 연산자 관련 문제를 풀이합니다.'
+date: '2024-10-15 23:59'
+lastModified: '2024-10-16 00:17'
+author: 'kayce'
+tags: ['coding-test', 'programmars', 'even', 'operator']
+order: [03, 02, 01, 04]
+---
+
+<LanguageSelector />
+
+### [Lv.0] [홀짝 구분하기](https://school.programmers.co.kr/learn/courses/30/lessons/181944?language=python3) - 181944
+
+```py
+n = int(input())
+result = "odd" if n&1 else "even"
+print(f'{n} is {result}')
+```
+
+```js
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+let input = [];
+
+rl.on('line', function (line) {
+  [n] = line.split(' ').map(Number);
+}).on('close', function () {
+  const result = n & 1 ? 'odd' : 'even';
+  console.log(`${n} is ${result}`);
+});
+```
+
+```java
+import java.util.Scanner;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        String result = (n & 1) == 1  ? "odd" : "even";
+        System.out.printf("%d is %s", n, result);
+        sc.close();
+    }
+}
+```
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+int main(void) {
+    int n;
+    cin >> n;
+    cout << n << " is " << (n&1 == 1 ? "odd" : "even");
+    return 0;
+}
+```
+
+홀짝은 2로 나눈 나머지를 기준으로 쉽게 판별할 수 있습니다. 그리고 1과의 비트 연산을 통해서도 확인할 수 있습니다. 나머지 연산은 `n % 2`로 확인하고, 비트 연산은 `n & 1`로 확인합니다.
+
+- Python:
+  - f-string을 활용해 출력 함수 `print`는 1회만 호출합니다.
+  - 파이썬의 [`삼항 연산자`](https://docs.python.org/3.9/reference/expressions.html#conditional-expressions)는 `참 if 조건 else 거짓` 방식으로 표현합니다.
+  - 파이썬의 [`비트 연산자`](https://docs.python.org/3.9/library/stdtypes.html#bitwise-operations-on-integer-types)는 `&`, `|`, `^`, `~`, `<<`, `>>`가 있습니다.
+- JavaScript:
+  - 템플릿 리터럴을 활용해 출력 함수 `console.log`는 1회만 호출합니다.
+  - 자바스크립트의 [`삼항 연산자`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Conditional_Operator)는 `조건 ? 참 : 거짓` 방식으로 표현합니다.
+  - 자바스크립트의 [`비트 연산자`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#binary_bitwise_operators)는 `&`, `|`, `^`, `~`, `<<`, `>>`, `>>>`가 있습니다.
+- Java:
+  - C의 [`printf`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Formatter.html) 스타일로 출력 함수 `System.out.printf`를 1회만 호출합니다.
+  - 자바의 [`삼항 연산자`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/op2.html)는 `조건 ? 참 : 거짓` 방식으로 표현합니다.
+  - 자바의 [`비트 연산자`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/op3.html)는 `&`, `|`, `^`, `~`, `<<`, `>>`, `>>>`가 있습니다.
+- C++:
+  - C++의 [`삼항 연산자`](https://en.cppreference.com/w/cpp/language/operator_other)는 `조건 ? 참 : 거짓` 방식으로 표현합니다.
+  - C++의 [`비트 연산자`](https://en.cppreference.com/w/cpp/language/operator_arithmetic)는 `&`, `|`, `^`, `~`, `<<`, `>>`가 있습니다.
