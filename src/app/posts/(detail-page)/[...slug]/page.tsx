@@ -1,17 +1,17 @@
-import { getPostBySlug, getPostPaths, parsePostMetaData } from '@/lib/post';
+import { getAllPosts, getPostBySlug } from '@/lib/post';
 import PostBody from '@/components/post/PostBody';
 import PostHeader from '@/components/post/PostHeader';
+import { notFound } from 'next/navigation';
 
 type Props = {
   params: { slug: string[] };
 };
 
 const PostPage = async ({ params: { slug } }: Props) => {
-  const [category, ...restSlug] = slug;
-  const post = await getPostBySlug(category, restSlug.join('/'));
+  const post = await getPostBySlug(slug);
 
   if (!post) {
-    return <div>포스트를 찾을 수 없습니다.</div>;
+    notFound();
   }
 
   return (
@@ -25,9 +25,9 @@ const PostPage = async ({ params: { slug } }: Props) => {
 export default PostPage;
 
 export async function generateStaticParams() {
-  const postPaths = await getPostPaths();
-  return postPaths.map((path) => {
-    const { category, slug } = parsePostMetaData(path);
-    return { slug: [category, ...slug.split('/')] };
-  });
+  const posts = await getAllPosts();
+
+  return posts.map((post) => ({
+    slug: [...post.url.split('/').slice(2)],
+  }));
 }
