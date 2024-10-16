@@ -1,5 +1,6 @@
+import CategorySection from '@/components/post/PostHeader/CategorySection';
 import DateDisplay from '@/components/post/PostHeader/DateDisplay';
-import MetadataSection from '@/components/post/PostHeader/MetadataSection';
+import TagSection from '@/components/post/PostHeader/TagSection';
 import { Post } from '@/config/types';
 
 type PostHeaderProps = {
@@ -13,12 +14,8 @@ const PostHeader = ({ post }: PostHeaderProps) => {
         <h1 className="text-4xl font-black mb-2">{post.title}</h1>
         <DateDisplay date={post.date} modifiedDate={post.lastModified} />
       </div>
-      <MetadataSection
-        label="Category"
-        items={[post.category]}
-        getHref={(category) => `/category/${category}`}
-      />
-      <MetadataSection label="Tags" items={post.tags} getHref={(tag) => `/tags/${tag}`} />
+      <CategorySection categories={post.categories} />
+      <TagSection tags={post.tags} />
     </header>
   );
 };
