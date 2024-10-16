@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import tainwindcssAnimate from 'tailwindcss-animate';
+import { PluginAPI } from 'tailwindcss/types/config';
 
 const config: Config = {
   darkMode: ['class'],
@@ -70,6 +71,20 @@ const config: Config = {
     'bg-gray-100',
     'bg-gray-700',
   ],
-  plugins: [tainwindcssAnimate],
+  plugins: [
+    tainwindcssAnimate,
+    function ({ addUtilities }: PluginAPI) {
+      const newUtilities = {
+        '.scrollbar-hide': {
+          '::-webkit-scrollbar': {
+            display: 'none',
+          },
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+        },
+      };
+      addUtilities(newUtilities);
+    },
+  ],
 };
 export default config;
