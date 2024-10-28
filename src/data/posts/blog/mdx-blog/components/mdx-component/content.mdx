@@ -1,0 +1,236 @@
+---
+title: 'MDX 블로그 컴포넌트 (2) - MDX Component'
+summary: '마크다운 문법을 JSX로 변환하는 MDX 컴포넌트의 구성 요소를 의미있는 단위로 모듈화'
+date: '2024-10-15 22:27'
+lastModified: '2024-10-15 22:27'
+author: 'kayce'
+tags: ['mdx-blog', 'components', 'mdx-component', 'module']
+order: [01, 02, 03, 02]
+---
+
+## 1.0 AS-IS : 모든 파싱 규칙을 담고있는 MDX Component
+
+> MDX Component는 MDXRemote에서 MDX 파일을 HTML로 변환할 때 사용되는 규칙을 반환하는 객체입니다.
+
+### 1.0.1 MDX Component 기존 코드
+
+```tsx
+// src/components/mdx/index.tsx
+import type { MDXComponents } from 'mdx/types';
+import CodeWrapper from '@/components/mdx/CodeWrapper';
+import dynamic from 'next/dynamic';
+
+const LanguageSelector = dynamic(() => import('@/components/mdx/LanguageSelector'), { ssr: false });
+
+export const mdxComponents: MDXComponents = {
+  h1: (props) => <h1 className="text-4xl font-black pb-4" {...props} />,
+  h2: (props) => <h2 className="text-3xl font-bold pb-4" {...props} />,
+  h3: (props) => <h3 className="text-2xl font-semibold pb-4 " {...props} />,
+  h4: (props) => <h4 className="text-xl font-medium pb-4" {...props} />,
+  h5: (props) => <h5 className="text-lg font-normal pb-4" {...props} />,
+  h6: (props) => <h6 className="text-base font-light pb-4" {...props} />,
+  p: (props) => <p className="text-lg mb-4" {...props} />,
+  li: (props) => <li className="pb-1" {...props} />,
+  ul: (props) => <ul className="list-disc pl-6 pb-4" {...props} />,
+  ol: (props) => <ol className="list-decimal pl-6 pb-4" {...props} />,
+  LanguageSelector: LanguageSelector,
+  CodeWrapper: CodeWrapper,
+  hr: (props) => <hr className="my-4" {...props} />,
+  pre: (props) => (
+    <CodeWrapper>
+      <pre
+        className="rounded-md p-4 overflow-x-auto my-4 whitespace-pre-wrap bg-gray-100"
+        {...props}
+      />
+    </CodeWrapper>
+  ),
+  code: (props) => {
+    const isInline = typeof props.children === 'string';
+
+    if (isInline) {
+      // 인라인 코드의 경우
+      return (
+        <code
+          className="bg-red-50 text-black font-semibold rounded px-1.5 py-0.5 text-lg"
+          {...props}
+        />
+      );
+    } else {
+      // 코드 블록의 경우
+      return <code className="text-xl font-mono" {...props} />;
+    }
+  },
+  blockquote: (props) => (
+    <blockquote
+      className="border-l-4 border-rose-700 bg-rose-100 p-4 my-4 rounded-r flex items-center"
+      {...props}
+    >
+      <p className="m-0">{props.children}</p>
+    </blockquote>
+  ),
+  a: (props) => <a className="hover:underline font-semibold" {...props} />,
+};
+```
+
+- h1 ~ h6 태그 등 마크다운 문법을 키로 하여 Tailwind CSS가 적용된 JSX가 매핑되어 있습니다.
+- UI/UX를 개선해나가며 커스텀 컴포넌트 및 규칙이 증가하고 있습니다. 이에 시인성을 높이기 위해 로직을 모듈화해서 분리합니다.
+
+## 2.0 TO-BE : MDX Component 로직을 모듈화
+
+### 2.0.1 headingComponents
+
+```tsx
+// src/components/mdx/headingComponents.tsx
+import type { MDXComponents } from 'mdx/types';
+
+export const headingComponents: MDXComponents = {
+  h1: (props) => <h1 className="text-4xl font-black pb-4" {...props} />,
+  h2: (props) => <h2 className="text-3xl font-bold pb-4" {...props} />,
+  h3: (props) => <h3 className="text-2xl font-semibold pb-4 " {...props} />,
+  h4: (props) => <h4 className="text-xl font-medium pb-4" {...props} />,
+  h5: (props) => <h5 className="text-lg font-normal pb-4" {...props} />,
+  h6: (props) => <h6 className="text-base font-light pb-4" {...props} />,
+};
+```
+
+- 기호 `#`로 변환되는 h1 ~ h6 태그의 스타일을 모듈화합니다.
+- 글의 가독성을 위해 padding을 py나 pt로 변경하는 것을 고려중입니다.
+
+### 2.0.2 textComponents
+
+```tsx
+// src/components/mdx/textComponents.tsx
+import type { MDXComponents } from 'mdx/types';
+
+export const textComponents: MDXComponents = {
+  p: (props) => <p className="text-lg mb-4" {...props} />,
+  a: (props) => <a className="hover:underline font-semibold" {...props} />,
+};
+```
+
+- 단락이나 링크 태그의 스타일을 모듈화합니다.
+
+### 2.0.3 listComponents
+
+```tsx
+import type { MDXComponents } from 'mdx/types';
+
+export const listComponents: MDXComponents = {
+  ul: (props) => <ul className="list-disc pl-6 pb-4" {...props} />,
+  ol: (props) => <ol className="list-decimal pl-6 pb-4" {...props} />,
+  li: (props) => <li className="pb-1" {...props} />,
+};
+```
+
+- 순서 없는 리스트, 순서 있는 리스트, 리스트 아이템 태그의 스타일을 모듈화합니다.
+- 주로 코드 블럭이나 이미지 아래의 설명을 위해 사용중인데, 글씨가 좀 작지는 않은지 주시중입니다.
+
+### 2.0.4 codeComponents
+
+```tsx
+// src/components/mdx/codeComponents/index.tsx
+import type { MDXComponents } from 'mdx/types';
+import CodeWrapper from '@/components/mdx/codeComponents/CodeWrapper';
+
+export const codeComponents: MDXComponents = {
+  pre: (props) => (
+    <CodeWrapper>
+      <pre
+        className="rounded-md p-4 overflow-x-auto my-4 whitespace-pre-wrap bg-gray-100"
+        {...props}
+      />
+    </CodeWrapper>
+  ),
+  code: (props) => {
+    const isInline = typeof props.children === 'string';
+    return isInline ? (
+      <code
+        className="bg-red-50 text-black font-semibold rounded px-1.5 py-0.5 text-lg"
+        {...props}
+      />
+    ) : (
+      <code className="text-xl font-mono" {...props} />
+    );
+  },
+};
+```
+
+- 코드 블럭과 관련된 컴포넌트는 codeComponents 디렉토리 하위에 모아두었습니다.
+- codeComponents 컴포넌트는 index.tsx 파일명을 사용했기 때문에, import 하는 곳에서 codeComponents.tsx 일때와 동일하게 사용할 수 있습니다.
+
+### 2.0.5 tableComponents
+
+```tsx
+import type { MDXComponents } from 'mdx/types';
+
+export const tableComponents: MDXComponents = {
+  table: (props) => (
+    <div className="overflow-x-auto my-8">
+      <table className="w-full border-collapse" {...props} />
+    </div>
+  ),
+  thead: (props) => <thead className="bg-gray-100" {...props} />,
+  th: (props) => (
+    <th
+      className="border border-gray-300 px-4 py-2 text-left text-sm font-semibold text-gray-700"
+      {...props}
+    />
+  ),
+  td: (props) => (
+    <td className="border border-gray-300 px-4 py-2 text-sm text-gray-900" {...props} />
+  ),
+};
+```
+
+- 테이블 렌더링과 관련된 규칙을 추가했습니다.
+
+### 2.0.6 miscComponents
+
+```tsx
+import type { MDXComponents } from 'mdx/types';
+
+export const miscComponents: MDXComponents = {
+  blockquote: (props) => (
+    <blockquote
+      className="border-l-4 border-rose-700 bg-rose-100 p-4 my-4 rounded-r flex items-center"
+      {...props}
+    >
+      <p className="m-0">{props.children}</p>
+    </blockquote>
+  ),
+  hr: (props) => <hr className="my-4" {...props} />,
+};
+```
+
+- 기타 컴포넌트들을 모아두었습니다.
+
+### 2.0.7 MDX Component 수정
+
+```tsx
+// src/components/mdx/index.tsx
+import type { MDXComponents } from 'mdx/types';
+import dynamic from 'next/dynamic';
+import { headingComponents } from '@/components/mdx/headingComponents';
+import { textComponents } from '@/components/mdx/textComponents';
+import { listComponents } from '@/components/mdx/listComponents';
+import { codeComponents } from '@/components/mdx/codeComponents';
+import { tableComponents } from '@/components/mdx/tableComponents';
+import { miscComponents } from '@/components/mdx/miscComponents';
+
+const LanguageSelector = dynamic(() => import('@/components/mdx/codeComponents/LanguageSelector'), {
+  ssr: false,
+});
+
+export const mdxComponents: MDXComponents = {
+  ...headingComponents,
+  ...textComponents,
+  ...listComponents,
+  ...codeComponents,
+  ...tableComponents,
+  ...miscComponents,
+  LanguageSelector,
+};
+```
+
+- 의미있는 단위로 컴포넌트를 모듈화했기 때문에 가독성과 시인성이 더 좋아졌다고 생각합니다.
+- MDX 파일들은 서버 컴포넌트에서 `genereateStaticParams` 함수와 다이나믹 라우트를 활용해 빌드 시점에 정적 페이지를 생성합니다. `LanguageSelector`는 클라이언트 사이드에서의 동작을 담고 있기 때문에, 동적 임포트와 `ssr:false`옵션을 사용해 프리렌더를 방지하고 있습니다.

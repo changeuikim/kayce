@@ -1,4 +1,4 @@
-export interface PostMatter {
+export interface FrontMatter {
   title: string;
   summary: string;
   date: string;
@@ -8,9 +8,14 @@ export interface PostMatter {
   order: number[];
 }
 
-export interface Post extends PostMatter {
+export interface Category {
+  name: string;
+  type: 'large' | 'middle';
+}
+
+export interface Post extends FrontMatter {
   content: string;
-  category: string;
+  categories: Category[];
   slug: string;
   url: string;
 }
@@ -19,4 +24,31 @@ export interface PaginationProps {
   currentPage: number;
   totalPages: number;
   basePath: string;
+}
+
+export type PaginatedResult<T> = {
+  items: T[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+};
+
+export type ScrollableItem = {
+  item: string;
+  type?: 'large' | 'middle';
+  isHighlighted?: boolean;
+};
+
+export type ScrollableItemListProps = {
+  items: ScrollableItem[];
+  basePath: string;
+  currentItem?: string;
+};
+
+export interface CategorySectionProps {
+  categories: Category[];
+}
+
+export interface TagSectionProps {
+  tags: string[];
 }

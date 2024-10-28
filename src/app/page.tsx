@@ -1,9 +1,9 @@
 import PostList from '@/components/post/PostList';
-import { getRecentPostList } from '@/lib/post';
+import { getPaginatedRecentPosts } from '@/lib/post';
 import ButtonLink from '@/components/common/ButtonLink';
 
 const HomePage = async () => {
-  const recentPosts = await getRecentPostList();
+  const { items: recentPosts } = await getPaginatedRecentPosts(7);
 
   return (
     <main className="p-4">

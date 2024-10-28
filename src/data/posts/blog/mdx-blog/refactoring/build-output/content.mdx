@@ -1,0 +1,315 @@
+---
+title: '[MDX Blog] 리팩토링 (6) - 빌드 결과물'
+summary: '/.next 디렉토리에 저장되는 Next.js 빌드 결과물을 살펴봅니다.'
+date: '2024-10-20 23:52'
+lastModified: '2024-10-20 23:52'
+author: 'kayce'
+tags: ['next-js', 'build', 'manifest', 'chunk']
+order: [01, 02, 03, 06]
+---
+
+## 6.1. 빌드 결과
+
+Next.js의 빌드 결과물은 `/.next` 디렉토리에 저장됩니다. `next build` 명령어가 실행될 때마다 이 디렉토리는 초기화되고, 새로운 빌드 결과물이 생성됩니다.
+
+```bash
+$ tree -L 3
+.
+|-- cache
+|   |-- eslint
+|   |-- swc
+|   |   `-- plugins
+|   `-- webpack
+|       |-- client-development
+|       |-- client-production
+|       |-- edge-server-production
+|       `-- server-production
+|-- server
+|   |-- app
+|   |   |-- _not-found
+|   |   |-- _not-found.html
+|   |   |-- _not-found.meta
+|   |   |-- _not-found.rsc
+|   |   |-- about
+|   |   |-- about.html
+|   |   |-- about.meta
+|   |   |-- about.rsc
+|   |   |-- category
+|   |   |-- category.html
+|   |   |-- category.meta
+|   |   |-- category.rsc
+|   |   |-- favicon.ico
+|   |   |-- favicon.ico.body
+|   |   |-- favicon.ico.meta
+|   |   |-- index.html
+|   |   |-- index.meta
+|   |   |-- index.rsc
+|   |   |-- page.js
+|   |   |-- page.js.nft.json
+|   |   |-- page_client-reference-manifest.js
+|   |   |-- posts
+|   |   |-- posts.html
+|   |   |-- posts.meta
+|   |   |-- posts.rsc
+|   |   |-- tags
+|   |   |-- tags.html
+|   |   |-- tags.meta
+|   |   `-- tags.rsc
+|   |-- app-paths-manifest.json
+|   |-- chunks
+|   |   |-- 111.js
+|   |   |-- 354.js
+|   |   |-- 436.js
+|   |   |-- 621.js
+|   |   |-- 680.js
+|   |   |-- 682.js
+|   |   |-- 718.js
+|   |   |-- 948.js
+|   |   `-- font-manifest.json
+|   |-- font-manifest.json
+|   |-- functions-config-manifest.json
+|   |-- interception-route-rewrite-manifest.js
+|   |-- middleware-build-manifest.js
+|   |-- middleware-manifest.json
+|   |-- middleware-react-loadable-manifest.js
+|   |-- next-font-manifest.js
+|   |-- next-font-manifest.json
+|   |-- pages
+|   |   |-- 404.html
+|   |   |-- 500.html
+|   |   |-- _app.js
+|   |   |-- _app.js.nft.json
+|   |   |-- _document.js
+|   |   |-- _document.js.nft.json
+|   |   |-- _error.js
+|   |   `-- _error.js.nft.json
+|   |-- pages-manifest.json
+|   |-- server-reference-manifest.js
+|   |-- server-reference-manifest.json
+|   `-- webpack-runtime.js
+|-- static
+|   |-- chunks
+|   |   |-- 23-a5457c8b2aa9156e.js
+|   |   |-- 231-1533c83c4b4d4aa5.js
+|   |   |-- 467-b3b9783ac1aff549.js
+|   |   |-- app
+|   |   |-- fd9d1056-8d42db6c53771e4c.js
+|   |   |-- framework-f66176bb897dc684.js
+|   |   |-- main-app-449b65400f37e07a.js
+|   |   |-- main-f6a237bd7bff7ee6.js
+|   |   |-- pages
+|   |   |-- polyfills-42372ed130431b0a.js
+|   |   `-- webpack-134e1d4a9eb72f7f.js
+|   |-- css
+|   |   `-- abc87bcd9a786a34.css
+|   |-- iideHNderTd7iul-BRXKa
+|   |   |-- _buildManifest.js
+|   |   `-- _ssgManifest.js
+|   `-- media
+|       `-- 119cf01b445a4dc3-s.p.woff2
+`-- types
+|   |-- app
+|   |   |-- about
+|   |   |-- category
+|   |   |-- layout.ts
+|   |   |-- page.ts
+|   |   |-- posts
+|   |   `-- tags
+|   `-- package.json
+|-- app-build-manifest.json
+|-- app-path-routes-manifest.json
+|-- BUILD_ID
+|-- build-manifest.json
+|-- export-marker.json
+|-- images-manifest.json
+|-- next-minimal-server.js.nft.json
+|-- next-server.js.nft.json
+|-- package.json
+|-- prerender-manifest.json
+|-- react-loadable-manifest.json
+|-- required-server-files.json
+|-- routes-manifest.json
+`-- trace
+
+
+32 directories, 83 files
+```
+
+- `tree` 명령어를 사용하면 디렉토리 구조를 트리 형태로 출력할 수 있습니다.
+
+### 6.1.1 cache 디렉토리
+
+빌드 성능 향상을 위한 캐시 파일이 저장되는 디렉토리입니다.
+
+```bash
+.
+|-- cache
+|   |-- eslint
+|   |-- swc
+|   |   `-- plugins
+|   `-- webpack
+|       |-- client-development
+|       |-- client-production
+|       |-- edge-server-production
+|       `-- server-production
+```
+
+- Next.js는 내부적으로 [`ESLint`](https://nextjs.org/docs/app/building-your-application/configuring/eslint)를 사용해 정적 코드 검사를 제공합니다.
+- Next.js 컴파일러는 [`swc`](https://nextjs.org/docs/architecture/nextjs-compiler#why-swc)를 사용하여 [`Rust`](https://www.rust-lang.org/learn) 기반으로 JavaScript/TypeScript 컴파일러의 결과물을 캐싱합니다. 다음 빌드 시의 컴파일 시간을 단축할 수 있습니다.
+- Next.js는 번들러로 [`Webpack 5`](https://nextjs.org/docs/messages/webpack5)를 채택하고 있습니다. 각 환경(개발, 프로덕션, 엣지 서버, 서버)에 따라 다른 설정을 사용하며, 이를 캐싱하여 빌드 시간을 단축할 수 있습니다.
+
+### 6.1.2 server 디렉토리
+
+Next.js 서버에서 실행되는 파일이 저장되는 디렉토리입니다.
+
+```bash
+|-- server
+|   |-- app
+|   |   |-- _not-found
+|   |   |-- about
+|   |   |-- category
+|   |   |-- posts
+|   |   |-- tags
+|   |   |-- _not-found.html
+|   |   |-- _not-found.meta
+|   |   |-- _not-found.rsc
+|   |   |-- about.html
+|   |   |-- about.meta
+|   |   |-- about.rsc
+|   |   |-- category.html
+|   |   |-- category.meta
+|   |   |-- category.rsc
+|   |   |-- favicon.ico
+|   |   |-- favicon.ico.body
+|   |   |-- favicon.ico.meta
+|   |   |-- index.html
+|   |   |-- index.meta
+|   |   |-- index.rsc
+|   |   |-- page.js
+|   |   |-- page.js.nft.json
+|   |   |-- page_client-reference-manifest.js
+|   |   |-- posts.html
+|   |   |-- posts.meta
+|   |   |-- posts.rsc
+|   |   |-- tags.html
+|   |   |-- tags.meta
+|   |   `-- tags.rsc
+|   |-- chunks
+|   |   |-- 111.js
+|   |   |-- 354.js
+|   |   |-- 436.js
+|   |   |-- 621.js
+|   |   |-- 680.js
+|   |   |-- 682.js
+|   |   |-- 718.js
+|   |   |-- 948.js
+|   |   `-- font-manifest.json
+|   |-- pages
+|   |   |-- 404.html
+|   |   |-- 500.html
+|   |   |-- _app.js
+|   |   |-- _app.js.nft.json
+|   |   |-- _document.js
+|   |   |-- _document.js.nft.json
+|   |   |-- _error.js
+|   |   `-- _error.js.nft.json
+|   |-- app-paths-manifest.json
+|   |-- font-manifest.json
+|   |-- functions-config-manifest.json
+|   |-- interception-route-rewrite-manifest.js
+|   |-- middleware-build-manifest.js
+|   |-- middleware-manifest.json
+|   |-- middleware-react-loadable-manifest.js
+|   |-- next-font-manifest.js
+|   |-- next-font-manifest.json
+|   |-- pages-manifest.json
+|   |-- server-reference-manifest.js
+|   |-- server-reference-manifest.json
+|   `-- webpack-runtime.js
+```
+
+- app :
+  - App Router를 사용하는 페이지의 HTML, 메타데이터, React Server Components(RSC) 파일이 저장되는 디렉토리입니다.
+  - `*.html`: 정적으로 생성된 HTML 파일
+  - `*.meta`: 페이지 메타데이터
+  - `*.rsc`: React Server Component 페이로드
+  - 기본적으로 생성되는 `index`, `not-found` 페이지와 `about`, `category`, `posts`, `tags` 등 사용자 정의 페이지가 여기에 저장됩니다.
+- chunk : 서버사이드 렌더링을 위한 청크 파일이 저장되는 디렉토리입니다.
+- pages : [`Pages Router`](https://nextjs.org/docs/pages)방식의 기본 페이지(`404`, `500`, `_app`, `_document`, `_error`)들이 저장되는 디렉토리입니다.
+- manifest 파일은 빌드 결과물을 추적하고, 빌드 시점에 생성된 파일을 참조하는 데 사용됩니다.
+
+### 6.1.3 static 디렉토리
+
+클라이언트에 제공되는 정적 파일이 저장되는 디렉토리입니다.
+
+```bash
+|-- static
+|   |-- chunks
+|   |   |-- 23-a5457c8b2aa9156e.js
+|   |   |-- 231-1533c83c4b4d4aa5.js
+|   |   |-- 467-b3b9783ac1aff549.js
+|   |   |-- app
+|   |   |-- fd9d1056-8d42db6c53771e4c.js
+|   |   |-- framework-f66176bb897dc684.js
+|   |   |-- main-app-449b65400f37e07a.js
+|   |   |-- main-f6a237bd7bff7ee6.js
+|   |   |-- pages
+|   |   |-- polyfills-42372ed130431b0a.js
+|   |   `-- webpack-134e1d4a9eb72f7f.js
+|   |-- css
+|   |   `-- abc87bcd9a786a34.css
+|   |-- iideHNderTd7iul-BRXKa
+|   |   |-- _buildManifest.js
+|   |   `-- _ssgManifest.js
+|   `-- media
+|       `-- 119cf01b445a4dc3-s.p.woff2
+```
+
+- chunks :
+  - 클라이언트사이드 렌더링을 위한 청크 파일이 저장되는 디렉토리입니다.
+  - framework-\*.js: Next.js 프레임워크 코드
+  - main-\*.js: 메인 애플리케이션 코드
+  - polyfills-\*.js: 브라우저 호환성을 위한 폴리필
+- css : 빌드된 CSS 파일이 저장되는 디렉토리입니다.
+- media : 폰트, 이미지 등의 미디어 파일이 저장되는 디렉토리입니다.
+
+### 6.1.4 types 디렉토리
+
+타입 정의 파일이 저장되는 디렉토리입니다.
+
+```bash
+`-- types
+|   |-- app
+|   |   |-- about
+|   |   |-- category
+|   |   |-- layout.ts
+|   |   |-- page.ts
+|   |   |-- posts
+|   |   `-- tags
+|   `-- package.json
+```
+
+- App Router 컴포넌트에서 사용되는 타입 정의 파일이 저장되는 디렉토리입니다.
+
+### 6.1.5 루트 경로
+
+```bash
+|-- app-build-manifest.json
+|-- app-path-routes-manifest.json
+|-- BUILD_ID
+|-- build-manifest.json
+|-- export-marker.json
+|-- images-manifest.json
+|-- next-minimal-server.js.nft.json
+|-- next-server.js.nft.json
+|-- package.json
+|-- prerender-manifest.json
+|-- react-loadable-manifest.json
+|-- required-server-files.json
+|-- routes-manifest.json
+`-- trace
+```
+
+- [`BUILD_ID`](https://nextjs.org/docs/pages/api-reference/next-config-js/generateBuildId) : 각 빌드를 고유하게 식별하는 ID이며, 캐시 무효화와 빌드 버전 관리에 사용됩니다.
+- [`export-marker.json`](https://nextjs.org/docs/app/building-your-application/deploying/static-exports) : `next export` 명령어로 생성된 정적 내보내기 설정 및 결과물을 추적하는 파일입니다.
+- 그 외 파일들은 빌드 결과물을 추적하고, 빌드 시점에 생성된 파일을 참조하는 데 사용됩니다.

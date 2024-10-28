@@ -1,33 +1,59 @@
-import Link from 'next/link';
-import { PaginationProps } from '@/config/types';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
-const Pagination = ({ currentPage, totalPages, basePath }: PaginationProps) => {
-  const prevPage = currentPage > 1 ? currentPage - 1 : null;
-  const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  basePath: string;
+}
+
+const PostPagination = ({ currentPage, totalPages, basePath }: PaginationProps) => {
+  const renderPaginationItems = () => {
+    const items = [];
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink href={`${basePath}/${i}`} isActive={i === currentPage}>
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      } else if (i === currentPage - 2 || i === currentPage + 2) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+    }
+    return items;
+  };
 
   return (
-    <div className="flex justify-center space-x-4 mt-8">
-      {prevPage && (
-        <Link
-          href={`${basePath}/${prevPage}`}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          이전
-        </Link>
-      )}
-      <span className="px-4 py-2">
-        전체 {totalPages} 중 {currentPage} 페이지
-      </span>
-      {nextPage && (
-        <Link
-          href={`${basePath}/${nextPage}`}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          다음
-        </Link>
-      )}
-    </div>
+    <Pagination>
+      <PaginationContent>
+        {currentPage > 1 && (
+          <PaginationItem>
+            <PaginationPrevious href={`${basePath}/${currentPage - 1}`} />
+          </PaginationItem>
+        )}
+        {renderPaginationItems()}
+        {currentPage < totalPages && (
+          <PaginationItem>
+            <PaginationNext href={`${basePath}/${currentPage + 1}`} />
+          </PaginationItem>
+        )}
+      </PaginationContent>
+    </Pagination>
   );
 };
 
-export default Pagination;
+export default PostPagination;

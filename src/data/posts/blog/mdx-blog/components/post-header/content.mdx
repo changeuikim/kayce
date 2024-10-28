@@ -1,0 +1,331 @@
+---
+title: 'MDX 블로그 컴포넌트 (1) - Post Header'
+summary: 'MDX를 파싱하는 디테일 페이지에서 프론트 매터 정보를 표시하는 UI/UX를 개선합니다.'
+date: '2024-10-15 23:00'
+lastModified: '2024-10-15 23:00'
+author: 'kayce'
+tags: ['mdx-blog', 'components', 'front-matter', 'post-header']
+order: [01, 02, 03, 01]
+---
+
+## 1.0 AS-IS : SSG 방식으로 디테일 페이지를 생성하기 위한 현재 로직
+
+### 1.0.1 디렉토리 구조
+
+> 빌드 시점에 모든 페이지를 정적으로 프리렌더하기 위해서 Next.js 14의 동적 라우트 세그먼트를 활용하고 있습니다.
+
+```bash
+.
+└── posts
+    ├── (detail-page)
+    │   └── [...slug]
+    │       └── page.tsx
+    ├── (list-page)
+    │   └── [page]
+    │       └── page.tsx
+    └── page.tsx
+```
+
+- 디테일 페이지는 [`Catch-all Segments`](https://nextjs.org/docs/pages/building-your-application/routing/dynamic-routes#catch-all-segments)를 사용해 다양한 깊이의 동적 라우트를 모두 캐치해 렌더링합니다.
+- 리스트 페이지는 [`generateStaticParams`](https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes#generating-static-params) 함수와 동적 세그먼트를 사용해 페이지네이션 단위의 모든 페이지를 렌더링합니다.
+
+```tsx
+// src/app/posts/page.tsx
+import { redirect } from 'next/navigation';
+
+export default function PostsPage() {
+  redirect('/posts/1');
+}
+```
+
+- `/posts` 경로의 루트 페이지는 페이지네이션의 첫번째 페이지로 리다이렉트 될 수 있도록 서버 컴포넌트 함수 [`redirect`](https://nextjs.org/docs/app/building-your-application/routing/redirecting#redirect-function)를 사용합니다.
+
+### 1.0.2 디테일 페이지 생성
+
+> `generateStaticParams` 함수를 사용해 빌드 시점에 모든 MDX 파일에 대한 파라미터를 생성하고, 이를 `PostPage` 컴포넌트에 전달해 페이지를 생성합니다.
+
+```tsx
+// src/app/posts/(detail-page)/[...slug]/page.tsx
+import { getPostBySlug, getPostPaths, parsePostMetaData } from '@/lib/post';
+import PostBody from '@/components/post/PostBody';
+
+type Props = {
+  params: { slug: string[] };
+};
+
+const PostPage = async ({ params: { slug } }: Props) => {
+  const [category, ...restSlug] = slug;
+  const post = await getPostBySlug(category, restSlug.join('/'));
+
+  if (!post) {
+    return <div>포스트를 찾을 수 없습니다.</div>;
+  }
+
+  return <PostBody post={post} />;
+};
+
+export default PostPage;
+
+export async function generateStaticParams() {
+  const postPaths = await getPostPaths();
+  return postPaths.map((path) => {
+    const { category, slug } = parsePostMetaData(path);
+    return { slug: [category, ...slug.split('/')] };
+  });
+}
+```
+
+- 빌드 과정에서 파라미터를 생성하고 전달하는 과정을 제외하면, 핵심 로직은 `getPostBySlug` 함수를 통해 MDX 파일을 파싱하고, `PostBody` 컴포넌트에 전달해 렌더링하는 것으로 이루어져 있습니다.
+
+### 1.0.3 PostBody 컴포넌트
+
+> `PostBody` 컴포넌트는 전달받은 MDX 파일의 내용을 `MDXRemote` 컴포넌트를 통해 렌더링합니다.
+
+```tsx
+// src/components/post/PostBody.tsx
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import { mdxComponents } from '@/components/mdx';
+import { Post } from '@/config/types';
+import remarkGfm from 'remark-gfm';
+import rehypeSlug from 'rehype-slug';
+import rehypePrettyCode from 'rehype-pretty-code';
+
+type PostBodyProps = {
+  post: Post;
+};
+
+const PostBody = ({ post }: PostBodyProps) => {
+  return (
+    <article className="p-4">
+      <h1 className="text-4xl font-black pb-4">{post.title}</h1>
+      <br />
+      <br />
+      <MDXRemote
+        source={post.content}
+        components={mdxComponents}
+        options={{
+          mdxOptions: {
+            remarkPlugins: [remarkGfm],
+            rehypePlugins: [rehypeSlug, [rehypePrettyCode, { theme: 'github-dark' }]],
+          },
+        }}
+      />
+    </article>
+  );
+};
+
+export default PostBody;
+```
+
+- 현재 로직에는 `h1` 태그가 직접 구현되어 있고, 충분한 프론트 매터 정보를 전달하지 못하고 있습니다.
+- 관련 로직을 분리해 `PostHeader` 컴포넌트를 구현하고, 디테일 페이지에서 별도로 렌더링할 예정입니다.
+
+## 2.0 TO-BE : 디테일 페이지에 프론트 매터 정보를 표시하는 PostHeader 컴포넌트를 추가
+
+### 2.0.1 PostHeader 컴포넌트 구현
+
+> 헤더에 제목과 더불어 작성일, 카테고리, 태그 정보를 함께 표시합니다.
+
+```tsx
+import DateDisplay from '@/components/post/PostHeader/DateDisplay';
+import MetadataSection from '@/components/post/PostHeader/MetadataSection';
+import { Post } from '@/config/types';
+
+type PostHeaderProps = {
+  post: Post;
+};
+
+const PostHeader = ({ post }: PostHeaderProps) => {
+  return (
+    <header className="mb-8 pb-4 border-b border-gray-200">
+      <div className="text-center mb-4">
+        <h1 className="text-4xl font-black mb-2">{post.title}</h1>
+        <DateDisplay date={post.date} modifiedDate={post.lastModified} />
+      </div>
+      <MetadataSection
+        label="Category"
+        items={[post.category]}
+        getHref={(category) => `/category/${category}`}
+      />
+      <MetadataSection label="Tags" items={post.tags} getHref={(tag) => `/tags/${tag}`} />
+    </header>
+  );
+};
+
+export default PostHeader;
+```
+
+- 제목을 이제 뷰포트 y축에 배치합니다.
+- 날짜 표시를 위한 `DataDisplay` 컴포넌트를 사용합니다. 제목처럼 중앙에 정렬합니다.
+- 카테고리와 태그 정보를 표시하기 위한 `MetadataSection` 컴포넌트를 사용합니다. 메타데이터 섹션은 왼쪽 정렬을 유지합니다.
+- getHref prop에 들어온 값을 이용해 카테고리와 태그 페이지로 이동할 수 있는 링크 정보를 생성하는 콜백 함수를 전달합니다.
+
+### 2.0.2 DateDisplay 컴포넌트 구현
+
+> 날짜 정보의 포매팅 유틸리티 함수를 정의하고, 최종 수정일과 작성일을 조건부로 렌더링합니다.
+
+```tsx
+// src/components/post/PostHeader/DateDisplay.tsx
+import { formatDate } from '@/lib/dateUtils';
+
+type DateDisplayProps = {
+  date: string;
+  modifiedDate?: string;
+};
+
+const DateDisplay = ({ date, modifiedDate }: DateDisplayProps) => {
+  const isModified = modifiedDate && modifiedDate !== date;
+  const dateToShow = isModified ? modifiedDate : date;
+  const dateLabel = isModified ? '최종 수정일' : '작성일';
+
+  return (
+    <time className="text-sm text-red-800" title={`${dateLabel}: ${formatDate(dateToShow)}`}>
+      {formatDate(dateToShow)}
+    </time>
+  );
+};
+
+export default DateDisplay;
+
+// src/lib/dateUtils.ts
+const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토'];
+
+export function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const dayOfWeek = DAYS_OF_WEEK[date.getDay()];
+
+  let hours = date.getHours();
+  const meridiem = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+
+  return `${year}년 ${month}월 ${day}일 (${dayOfWeek}) ${meridiem} ${hours}시`;
+}
+```
+
+- 프론트 매터는 기본적으로 date와 lastModified 필드를 가지고 있습니다. lastModified 기입을 잊었거나 작성일과 동일하다면 작성일을 표시합니다. 아니라면 최종 수정일을 표시합니다.
+- `YYYY년 MM월 DD일 (요일) AM/PM HH시` 형식으로 날짜를 포매팅합니다.
+
+### 2.0.3 MetadataSection 컴포넌트 구현
+
+> 기존에 구현한 `ButtonLink` 컴포넌트를 활용하여 카테고리와 태그 정보를 렌더링합니다.
+
+```tsx
+// src/components/post/PostHeader/MetadataSection.tsx
+import ButtonLink from '@/components/common/ButtonLink';
+
+type MetadataSectionProps = {
+  label: string;
+  items: string[];
+  getHref: (item: string) => string;
+};
+
+const MetadataSection = ({ label, items, getHref }: MetadataSectionProps) => (
+  <div className="flex flex-wrap gap-2 mb-4 items-center">
+    <span className="font-semibold">{label}:</span>
+    {items.map((item) => (
+      <ButtonLink key={item} href={getHref(item)} variant="outline" size="sm">
+        {item}
+      </ButtonLink>
+    ))}
+  </div>
+);
+
+export default MetadataSection;
+
+// src/components/common/ButtonLink.tsx
+import React from 'react';
+import Link from '@/components/common/Link';
+import { Button, ButtonProps } from '@/components/ui/button';
+
+interface ButtonLinkProps extends ButtonProps {
+  href: string;
+}
+
+const ButtonLink: React.FC<ButtonLinkProps> = ({ href, children, ...props }) => {
+  return (
+    <Button asChild {...props}>
+      <Link href={href}>{children}</Link>
+    </Button>
+  );
+};
+
+export default ButtonLink;
+```
+
+- `PostHeader` 컴포넌트에서 전달된 getHref 콜백 함수는 들어온 값을 이용해 카테고리와 태그 페이지로 이동할 수 있는 링크 정보를 생성합니다.
+- `ButtonLink` 컴포넌트는 `Button` 컴포넌트의 속성을 가진 `Link` 컴포넌트를 렌더링합니다.
+
+### 2.0.4 PostBody 컴포넌트 및 디테일 페이지 수정
+
+> `PostBody` 컴포넌트에서 제목 정보를 삭제하고, 디테일 페이지에서 `PostHeader` 컴포넌트와 함께 렌더링합니다.
+
+```tsx
+// src/app/posts/(detail-page)/[...slug]/page.tsx
+import { getPostBySlug, getPostPaths, parsePostMetaData } from '@/lib/post';
+import PostBody from '@/components/post/PostBody';
+import PostHeader from '@/components/post/PostHeader';
+
+type Props = {
+  params: { slug: string[] };
+};
+
+const PostPage = async ({ params: { slug } }: Props) => {
+  const [category, ...restSlug] = slug;
+  const post = await getPostBySlug(category, restSlug.join('/'));
+
+  if (!post) {
+    return <div>포스트를 찾을 수 없습니다.</div>;
+  }
+
+  return (
+    <article className="p-4">
+      <PostHeader post={post} />
+      <PostBody post={post} />
+    </article>
+  );
+};
+
+export default PostPage;
+
+export async function generateStaticParams() {
+  const postPaths = await getPostPaths();
+  return postPaths.map((path) => {
+    const { category, slug } = parsePostMetaData(path);
+    return { slug: [category, ...slug.split('/')] };
+  });
+}
+
+// src/components/post/PostBody.tsx
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import { mdxComponents } from '@/components/mdx';
+import { Post } from '@/config/types';
+import remarkGfm from 'remark-gfm';
+import rehypeSlug from 'rehype-slug';
+import rehypePrettyCode from 'rehype-pretty-code';
+
+type PostBodyProps = {
+  post: Post;
+};
+
+const PostBody = ({ post }: PostBodyProps) => {
+  return (
+    <MDXRemote
+      source={post.content}
+      components={mdxComponents}
+      options={{
+        mdxOptions: {
+          remarkPlugins: [remarkGfm],
+          rehypePlugins: [rehypeSlug, [rehypePrettyCode, { theme: 'github-dark' }]],
+        },
+      }}
+    />
+  );
+};
+
+export default PostBody;
+```
